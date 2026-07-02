@@ -55,6 +55,7 @@ ollama_url = "http://localhost:11434"   # or your tailnet host
 ollama_model = "qwen2.5:7b"             # dictation cleanup (small, fast)
 ollama_summary_model = "qwen2.5:7b"     # ghost summaries (bigger is fine, batch)
 hotkey = "alt+space"
+# input_device = "MacBook Pro Microphone"  # pin if a virtual device (Steam/Teams) is the system default
 ghost_hotkey = "alt+shift+g"
 # vault_dir = "/path/to/ObsidianVault"
 # ghost_input_device = "Shout Aggregate"  # mic+BlackHole aggregate for system audio

@@ -12,6 +12,10 @@ pub struct Config {
     pub ollama_model: String,
     /// Push-to-talk shortcut, e.g. "alt+space".
     pub hotkey: String,
+    /// Dictation input device by exact name; system default when unset.
+    /// Pin this if a virtual device (Steam/Teams) hijacks the default input.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_device: Option<String>,
     /// Directory holding the Parakeet ONNX model files. When unset, falls back
     /// to ./models (dev checkout) then ~/.config/shout/models.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,6 +45,7 @@ impl Default for Config {
             ollama_url: "http://localhost:11434".into(),
             ollama_model: "qwen2.5:7b".into(),
             hotkey: "alt+space".into(),
+            input_device: None,
             parakeet_model_dir: None,
             ghost_hotkey: "alt+shift+g".into(),
             ghost_input_device: None,

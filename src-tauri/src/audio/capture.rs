@@ -15,8 +15,13 @@ pub enum AudioCmd {
 /// Spawn the audio worker thread. It owns the cpal stream (which is !Send, so
 /// it must be created and dropped on one thread) and forwards finished
 /// recordings to the pipeline.
-pub fn spawn(rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
-    std::thread::spawn(move || run(rx, pipe_tx, app));
+pub fn spawn(
+    device: Option<String>,
+    rx: Receiver<AudioCmd>,
+    pipe_tx: Sender<PipeJob>,
+    app: AppHandle,
+) {
+    std::thread::spawn(move || run(device, rx, pipe_tx, app));
 }
 
 pub struct ActiveRecording {
@@ -42,7 +47,7 @@ impl ActiveRecording {
     }
 }
 
-fn run(rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
+fn run(device: Option<String>, rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
     let mut active: Option<ActiveRecording> = None;
     while let Ok(cmd) = rx.recv() {
         match cmd {
@@ -50,7 +55,7 @@ fn run(rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
                 if active.is_some() {
                     continue;
                 }
-                match start_recording() {
+                match start_recording_on(device.as_deref()) {
                     Ok(rec) => {
                         eprintln!("shout: recording started ({} Hz)", rec.sample_rate);
                         status(&app, "recording", None);
@@ -80,10 +85,6 @@ fn run(rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
     }
 }
 
-fn start_recording() -> Result<ActiveRecording> {
-    start_recording_on(None)
-}
-
 /// Start capturing from a named input device (exact match), or the default
 /// input device when `name` is None.
 pub fn start_recording_on(name: Option<&str>) -> Result<ActiveRecording> {
@@ -102,6 +103,9 @@ pub fn start_recording_on(name: Option<&str>) -> Result<ActiveRecording> {
             .default_input_device()
             .ok_or_else(|| anyhow!("no input device available"))?,
     };
+    if let Ok(desc) = device.description() {
+        eprintln!("shout: capturing from input device {:?}", desc.name());
+    }
     let supported = device
         .default_input_config()
         .context("no default input config")?;

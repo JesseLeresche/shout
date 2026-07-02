@@ -26,6 +26,7 @@ const FIELDS = [
   "ollama_model",
   "ollama_summary_model",
   "hotkey",
+  "input_device",
   "ghost_hotkey",
   "vault_dir",
   "ghost_input_device",

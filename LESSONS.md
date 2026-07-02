@@ -25,6 +25,12 @@ because his activity stole focus from the test target, and TTS audio played out 
 during what may have been a meeting. Check `ioreg -c IOHIDSystem` HIDIdleTime (and ask)
 before any synthetic-input test; prefer idle windows or explicit user cooperation.
 
+## Virtual audio devices can be the macOS default input and deliver pure silence
+Jesse's default input was "Steam Streaming Microphone" — capture "worked" (5s at
+44.1kHz) but every sample was 0.0. Diagnostic: log peak level per capture; peak
+0.0000 = wrong/virtual device or TCC denial, not an STT problem. Fix: `input_device`
+config pin + log the device name at capture start.
+
 ## Screen lock swallows global hotkeys and synthetic keys — check IOConsoleLocked first
 An E2E "regression" (zero shortcut events reaching the app) was just the lock screen:
 `ioreg -l -d 2 | grep IOConsoleLocked` said Yes. Desktop E2E needs unlocked+idle, a

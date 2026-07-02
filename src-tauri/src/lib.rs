@@ -55,7 +55,7 @@ pub fn run() {
         .setup(move |app| {
             let handle = app.handle().clone();
             pipeline::spawn(cfg.clone(), pipe_rx, handle.clone());
-            audio::capture::spawn(audio_rx, pipe_tx, handle.clone());
+            audio::capture::spawn(cfg.input_device.clone(), audio_rx, pipe_tx, handle.clone());
             ghost::spawn(cfg, ghost_rx, handle);
             hotkey::register(app, &dictation_hotkey, &ghost_hotkey, audio_tx, ghost_tx)?;
 
