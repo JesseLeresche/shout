@@ -174,3 +174,20 @@ filename slug derived from transcript content (re-verified:
 "me" speaker label documented in BLOCKERS.md as a deliberate lean-scope limitation.
 Its honest-gaps list (live mic toggle, BlackHole loopback, the 500ms worker drain
 loop, live summarize round-trip) matches BLOCKERS.md's live checklist.
+
+## 2026-07-02 — Phase 1 dictation E2E confirmed live by Jesse ("works like a charm")
+
+Two live-test bugs found and fixed first:
+1. **Silent mic**: system default input was "Steam Streaming Microphone" (virtual,
+   Steam-installed) → 5s of digital zeros (peak 0.0000). Fix: `input_device` config
+   pin (+ settings-form field + device-name logging); Jesse's config pins the
+   built-in mic.
+2. **UI stuck on "starting…"**: pipeline emitted "idle" before the webview listener
+   attached; events aren't replayed. Fix: last status cached, UI pulls via
+   `get_status` on load.
+
+Then the full loop, user-at-keyboard, real mic, log evidence:
+capturing from "MacBook Pro Microphone" (48kHz) → 3.72s captured, peak 0.956 →
+Parakeet: "Hello World Quick Test to see if this is working." → Ollama cleanup:
+"Hello, World. Quick test to see if this is working." → **injected 51 chars at the
+cursor** — confirmed by Jesse: "works like a charm". **Phase 1 fully verified.**
