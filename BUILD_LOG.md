@@ -114,3 +114,27 @@ Mitigation shipped: `keep_alive: "30m"` on every request + best-effort warm-up a
 startup, concurrent with the STT model load. Default stays qwen2.5:7b (quality
 headroom; warm latency fine). Tailnet host hardening remains a server-side task for
 Jesse's box (BLOCKERS.md) — client honors `SHOUT_OLLAMA_URL`/config for any host.
+Startup warm-up observed working live: "shout: ollama model qwen2.5:7b warmed".
+
+## 2026-07-02 — Ghost batch pipeline verified end-to-end (headless)
+
+Found and fixed a real bug via the new E2E: sherpa's Silero VAD expects exactly
+window_size (512-sample) frames per `accept_waveform` — feeding a whole buffer
+returned ONE chunk for 15s of 3-utterance audio. `Vad` now windows internally.
+
+Evidence (tests/ghost.rs, `cargo test` output): TTS fixtures (two macOS voices,
+generated with `say -o` — no audio played) stitched with 1s gaps →
+- VAD: 3 utterances detected
+- Whisper Large V3: near-verbatim transcripts of all three sentences
+- Diarization: **2 speakers found, correctly attributed [1,0,1]**
+  (Samantha/Daniel/Samantha) — pure Rust, no Python sidecar
+- Note written matching the ARCHITECTURE.md schema exactly (frontmatter, ## Summary,
+  ## Transcript with `> **speaker_N** (MM:SS):` lines)
+
+Full suite: **10/10 tests pass** (ghost E2E takes ~54s; loads the 3.1GB model).
+
+Still needing a live, unlocked machine: dictation injection into a controlled target,
+live ghost session via hotkey (mic path), and eyes-on Phase 3 UI checks (pill, tray,
+settings, scratch-that). Screen locked while Jesse is away — global hotkeys and
+synthetic keys are swallowed by the lock screen (IOConsoleLocked=Yes), which also
+explains the one failed E2E attempt right after resume.
