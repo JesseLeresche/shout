@@ -161,3 +161,16 @@ startup warm-up, and **independent latency measurements** (its own python calls:
 code with no defects; settings JS field names verified against the Config serde names
 (no mismatch, non-form fields preserved on save). `cargo check` clean. Remaining
 eyes-on items match BLOCKERS.md's live checklist exactly. **No bugs found.**
+
+## 2026-07-02 — Phase 4 verifier subagent verdict: PASS (all 8 criteria)
+
+Fresh-context subagent independently traced the whole ghost pipeline to code, verified
+the privacy invariant in ghost paths, and **ran the E2E itself** (84s, exit 0): 3 VAD
+chunks from the 3-sentence fixture, near-verbatim Whisper transcripts, 2 speakers with
+correct [1,0,1] attribution via real pyannote+3dspeaker diarization (not the
+fallback), and a schema-exact note. Minor deviations it flagged are now addressed:
+filename slug derived from transcript content (re-verified:
+`2026-07-02-1618-good-morning-everyone-lets.md`, suite green at 98s) and the missing
+"me" speaker label documented in BLOCKERS.md as a deliberate lean-scope limitation.
+Its honest-gaps list (live mic toggle, BlackHole loopback, the 500ms worker drain
+loop, live summarize round-trip) matches BLOCKERS.md's live checklist.
