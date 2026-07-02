@@ -25,7 +25,7 @@ if [ "${1:-}" = "--ghost" ]; then
 
   SEG=sherpa-onnx-pyannote-segmentation-3-0
   if [ ! -d "$SEG" ]; then
-    echo "Downloading $SEG…"
+    echo "Downloading ${SEG}..."
     curl -L -o "$SEG.tar.bz2" \
       "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-segmentation-models/$SEG.tar.bz2"
     tar xjf "$SEG.tar.bz2"
@@ -34,7 +34,7 @@ if [ "${1:-}" = "--ghost" ]; then
 
   EMB=3dspeaker_speech_eres2net_base_sv_zh-cn_3dspeaker_16k.onnx
   if [ ! -f "$EMB" ]; then
-    echo "Downloading $EMB…"
+    echo "Downloading ${EMB}..."
     curl -L -O \
       "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/$EMB"
   fi

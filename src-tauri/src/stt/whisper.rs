@@ -16,11 +16,8 @@ impl Whisper {
                 model.display()
             ));
         }
-        let ctx = WhisperContext::new_with_params(
-            &model.to_string_lossy(),
-            WhisperContextParameters::default(),
-        )
-        .context("load whisper model")?;
+        let ctx = WhisperContext::new_with_params(model, WhisperContextParameters::default())
+            .context("load whisper model")?;
         Ok(Self { ctx })
     }
 
@@ -32,12 +29,13 @@ impl Whisper {
         params.set_print_timestamps(false);
         let mut state = self.ctx.create_state().context("create whisper state")?;
         state.full(params, samples).context("run whisper")?;
-        let n = state.full_n_segments().context("segment count")?;
         let mut text = String::new();
-        for i in 0..n {
-            if let Ok(seg) = state.full_get_segment_text(i) {
-                text.push_str(seg.trim());
-                text.push(' ');
+        for i in 0..state.full_n_segments() {
+            if let Some(seg) = state.get_segment(i) {
+                if let Ok(s) = seg.to_str() {
+                    text.push_str(s.trim());
+                    text.push(' ');
+                }
             }
         }
         Ok(text.trim().to_string())

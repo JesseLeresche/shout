@@ -92,7 +92,11 @@ pub fn start_recording_on(name: Option<&str>) -> Result<ActiveRecording> {
         Some(wanted) => host
             .input_devices()
             .context("enumerate input devices")?
-            .find(|d| d.name().map(|n| n == wanted).unwrap_or(false))
+            .find(|d| {
+                d.description()
+                    .map(|desc| desc.name() == wanted)
+                    .unwrap_or(false)
+            })
             .ok_or_else(|| anyhow!("input device '{wanted}' not found"))?,
         None => host
             .default_input_device()
