@@ -16,6 +16,9 @@ pub struct Config {
     /// Pin this if a virtual device (Steam/Teams) hijacks the default input.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub input_device: Option<String>,
+    /// Type raw partial transcripts at the cursor while you talk, then correct
+    /// to the cleaned text on release. Off = partials stream to the pill only.
+    pub live_typing: bool,
     /// Directory holding the Parakeet ONNX model files. When unset, falls back
     /// to ./models (dev checkout) then ~/.config/shout/models.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -46,6 +49,7 @@ impl Default for Config {
             ollama_model: "qwen2.5:7b".into(),
             hotkey: "alt+space".into(),
             input_device: None,
+            live_typing: false,
             parakeet_model_dir: None,
             ghost_hotkey: "alt+shift+g".into(),
             ghost_input_device: None,

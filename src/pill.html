@@ -12,12 +12,17 @@
         height: 36px;
         margin: 6px auto;
         width: fit-content;
+        max-width: 530px;
         padding: 0 16px;
         border-radius: 18px;
         background: rgba(20, 20, 24, 0.88);
         color: #eee;
         font: 600 13px -apple-system, BlinkMacSystemFont, sans-serif;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      }
+      #ptext {
+        white-space: nowrap;
+        overflow: hidden;
       }
       #pdot { width: 9px; height: 9px; border-radius: 50%; background: gray; }
       #pdot.recording, #pdot.ghost-recording { background: #ff4d4f; animation: pulse 1.2s infinite; }
@@ -40,10 +45,29 @@
         "ghost-processing": "processing meeting…",
         "error": "error",
       };
+      const pdot = document.getElementById("pdot");
+      const ptext = document.getElementById("ptext");
+      let partial = null;
+
+      function render(state) {
+        pdot.className = state;
+        // While listening, show the live transcript tail instead of the label.
+        if (state === "recording" && partial) {
+          ptext.textContent = partial.length > 70 ? "…" + partial.slice(-69) : partial;
+        } else {
+          ptext.textContent = labels[state] ?? state;
+        }
+      }
+
+      let lastState = "idle";
       window.__TAURI__.event.listen("shout:status", ({ payload }) => {
-        document.getElementById("pdot").className = payload.state;
-        document.getElementById("ptext").textContent =
-          labels[payload.state] ?? payload.state;
+        lastState = payload.state;
+        if (payload.state !== "recording") partial = null;
+        render(payload.state);
+      });
+      window.__TAURI__.event.listen("shout:partial", ({ payload }) => {
+        partial = payload.text;
+        render(lastState);
       });
     </script>
   </body>

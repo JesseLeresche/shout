@@ -35,6 +35,11 @@ impl ActiveRecording {
         self.sample_rate
     }
 
+    /// Copy of everything captured so far (buffer keeps filling).
+    pub fn snapshot(&self) -> Vec<f32> {
+        self.buf.lock().unwrap().clone()
+    }
+
     /// Take everything captured since the last drain.
     pub fn drain(&self) -> Vec<f32> {
         std::mem::take(&mut *self.buf.lock().unwrap())
@@ -47,9 +52,33 @@ impl ActiveRecording {
     }
 }
 
+/// How often a snapshot is sent for partial (streaming) transcription.
+const PARTIAL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(750);
+
 fn run(device: Option<String>, rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
     let mut active: Option<ActiveRecording> = None;
-    while let Ok(cmd) = rx.recv() {
+    loop {
+        // While recording, wake periodically to stream a partial snapshot.
+        let cmd = if active.is_some() {
+            match rx.recv_timeout(PARTIAL_INTERVAL) {
+                Ok(cmd) => cmd,
+                Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                    if let Some(rec) = &active {
+                        let _ = pipe_tx.send(PipeJob::Partial {
+                            samples: rec.snapshot(),
+                            sample_rate: rec.sample_rate(),
+                        });
+                    }
+                    continue;
+                }
+                Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+            }
+        } else {
+            match rx.recv() {
+                Ok(cmd) => cmd,
+                Err(_) => break,
+            }
+        };
         match cmd {
             AudioCmd::Start => {
                 if active.is_some() {
@@ -75,7 +104,7 @@ fn run(device: Option<String>, rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>,
                         "shout: captured {:.2}s of audio",
                         samples.len() as f32 / sample_rate as f32
                     );
-                    let _ = pipe_tx.send(PipeJob {
+                    let _ = pipe_tx.send(PipeJob::Final {
                         samples,
                         sample_rate,
                     });

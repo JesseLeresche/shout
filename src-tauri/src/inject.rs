@@ -8,7 +8,7 @@ pub fn inject_text(text: &str) -> Result<()> {
         Ok(()) => Ok(()),
         Err(e) => {
             eprintln!("shout: clipboard paste failed ({e:#}); falling back to typing");
-            type_text(text)
+            type_text_at_cursor(text)
         }
     }
 }
@@ -44,14 +44,22 @@ fn paste_via_clipboard(text: &str) -> Result<()> {
     Ok(())
 }
 
-fn type_text(text: &str) -> Result<()> {
+/// Type text directly at the cursor (used by live-typing mode and as the
+/// clipboard-paste fallback).
+pub fn type_text_at_cursor(text: &str) -> Result<()> {
+    if text.is_empty() {
+        return Ok(());
+    }
     let mut enigo = Enigo::new(&Settings::default()).context("init enigo")?;
     enigo.text(text).context("type text")?;
     Ok(())
 }
 
-/// Erase the last `n` characters at the cursor ("scratch that").
+/// Erase the last `n` characters at the cursor ("scratch that", live-typing).
 pub fn delete_chars(n: usize) -> Result<()> {
+    if n == 0 {
+        return Ok(());
+    }
     let mut enigo = Enigo::new(&Settings::default()).context("init enigo")?;
     for _ in 0..n.min(4000) {
         enigo

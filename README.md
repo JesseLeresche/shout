@@ -76,6 +76,12 @@ Mail = "professional email prose"
 Say **"scratch that"** as its own dictation to erase the previous one.
 The app lives in the tray; closing the window hides it.
 
+While you hold the hotkey, the pill shows a **live partial transcript** (~750ms
+cadence). With `live_typing = true` in config, raw partials are typed at your cursor
+as you speak and corrected to the cleaned text on release — immediate, but the text
+visibly rewrites itself and can misbehave in terminals/vim; the default (pill-only
+streaming) never touches the target app until the final clean paste.
+
 ## Tests
 
 ```sh
