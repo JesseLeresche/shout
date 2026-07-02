@@ -10,6 +10,9 @@ pub struct Whisper {
 
 impl Whisper {
     pub fn load(model: &Path) -> Result<Self> {
+        // Route whisper.cpp's chatty stderr logging into the void once.
+        static LOG_HOOK: std::sync::Once = std::sync::Once::new();
+        LOG_HOOK.call_once(whisper_rs::install_logging_hooks);
         if !model.exists() {
             return Err(anyhow!(
                 "missing Whisper model {} — run scripts/download-models.sh --ghost",

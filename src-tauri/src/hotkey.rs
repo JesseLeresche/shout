@@ -19,7 +19,8 @@ pub fn register(
         .parse()
         .map_err(|e| anyhow!("invalid hotkey '{dictation_hotkey}': {e}"))?;
     app.global_shortcut()
-        .on_shortcut(dictation, move |_app, _sc, event| {
+        .on_shortcut(dictation, move |_app, sc, event| {
+            eprintln!("shout: dictation shortcut {sc} {:?}", event.state());
             let cmd = match event.state() {
                 ShortcutState::Pressed => AudioCmd::Start,
                 ShortcutState::Released => AudioCmd::StopAndProcess,

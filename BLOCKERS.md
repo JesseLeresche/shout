@@ -1,7 +1,20 @@
 # Blockers — things that need Jesse
 
-Nothing hard-blocked yet. Items below are user actions the app will need at runtime;
-development continues regardless.
+## Live checks needing you at an unlocked machine (~3 minutes total)
+Everything below is code-complete and headlessly verified; these confirm the live
+desktop legs (the lock screen swallows global hotkeys, so I can't automate them while
+you're away). The dev app should be running (`npm run tauri dev` if not).
+1. **Dictation**: click into any text field, hold `alt+space`, say a sentence,
+   release → cleaned text should appear at your cursor within ~2s. If nothing
+   appears: System Settings → Privacy & Security → Accessibility → enable your
+   terminal (or shout.app).
+2. **Scratch that**: immediately dictate the words "scratch that" → the previous
+   dictation should be erased.
+3. **Ghost mode**: press `alt+shift+g`, chat for ~30s, press again → a note appears
+   in `~/Documents/ShoutVault/Meetings/` (pill shows "processing meeting…" while the
+   3GB Whisper model loads+runs; allow a minute or two).
+4. **Eyes-on UI**: pill appears bottom-center during activity; tray menu has
+   ghost/show/quit; settings form saves to ~/.config/shout/config.toml.
 
 ## macOS permissions (needed for end-to-end dictation)
 - **Microphone**: macOS will prompt on first recording — click Allow.
@@ -13,6 +26,13 @@ development continues regardless.
 All crates chosen are cross-platform (cpal/WASAPI, enigo, arboard, global-shortcut),
 but there is no Windows machine in this environment to build or test on. Needs a
 Windows box: `npm install && npm run tauri dev`, then verify hotkey → dictation → paste.
+
+## Known limitation: no "me" speaker label (Phase 4)
+The spec's example note shows `speakers: [me, speaker_1, …]`. Identifying which
+diarized cluster is *you* needs a voice-enrollment sample and embedding comparison —
+deliberately out of scope for the lean build. All speakers are labeled speaker_N.
+If you want it: record a ~10s enrollment clip and we add a cosine-similarity match
+against the existing 3dspeaker embeddings.
 
 ## BlackHole install (Phase 4 system-audio loopback)
 Decision (per ARCHITECTURE.md open question): BlackHole virtual device + macOS Aggregate

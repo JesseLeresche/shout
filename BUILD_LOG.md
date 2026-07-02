@@ -88,3 +88,89 @@ injection's char count, capped at 4000, on the main thread).
 Resume checklist: `cargo check --tests` (new deps: whisper-rs — compiles whisper.cpp,
 long first build; chrono), `cargo test`, `./scripts/download-models.sh --ghost`,
 re-verify dictation E2E on idle machine, ghost E2E, then verifier subagents per phase.
+
+## 2026-07-02 — Resumed; Phases 3–4 compile, Phase 2 measured
+
+- First compile of the pause-drafted code: whisper.cpp built clean; **5 Rust errors
+  total** (cpal 0.18 `Device::name` → `description().name()`; whisper-rs 0.16.0's
+  released API differs from its README — `full_n_segments()` returns `c_int`, segment
+  text via `get_segment(i).to_str()`). Fixed; `cargo check --tests` clean, **9/9 tests
+  pass** (new: resampler ×2, obsidian note schema ×1).
+- Ghost models downloaded to models/: silero_vad.onnx, pyannote segmentation 3.0,
+  3dspeaker eres2net embedding, ggml-large-v3.bin (3.1GB). Script bug fixed en route
+  (`$SEG…` — bash swallowed the unicode ellipsis into the variable name under `set -u`).
+- Transient full DNS outage mid-resume (~2 min, even python resolution failed);
+  waited it out with a background probe, then reran both jobs.
+
+### Phase 2 latency evidence (quiet machine, local Ollama 0.24)
+
+| model | cold load | warm (2 short cleanups) |
+|---|---|---|
+| qwen2.5:7b | ~12s | 701ms, 404ms |
+| qwen2.5:3b | ~9s | 654ms, 286ms |
+
+Cleanup quality identical on the test set (self-correction applied, fillers stripped).
+Mitigation shipped: `keep_alive: "30m"` on every request + best-effort warm-up at app
+startup, concurrent with the STT model load. Default stays qwen2.5:7b (quality
+headroom; warm latency fine). Tailnet host hardening remains a server-side task for
+Jesse's box (BLOCKERS.md) — client honors `SHOUT_OLLAMA_URL`/config for any host.
+Startup warm-up observed working live: "shout: ollama model qwen2.5:7b warmed".
+
+## 2026-07-02 — Ghost batch pipeline verified end-to-end (headless)
+
+Found and fixed a real bug via the new E2E: sherpa's Silero VAD expects exactly
+window_size (512-sample) frames per `accept_waveform` — feeding a whole buffer
+returned ONE chunk for 15s of 3-utterance audio. `Vad` now windows internally.
+
+Evidence (tests/ghost.rs, `cargo test` output): TTS fixtures (two macOS voices,
+generated with `say -o` — no audio played) stitched with 1s gaps →
+- VAD: 3 utterances detected
+- Whisper Large V3: near-verbatim transcripts of all three sentences
+- Diarization: **2 speakers found, correctly attributed [1,0,1]**
+  (Samantha/Daniel/Samantha) — pure Rust, no Python sidecar
+- Note written matching the ARCHITECTURE.md schema exactly (frontmatter, ## Summary,
+  ## Transcript with `> **speaker_N** (MM:SS):` lines)
+
+Full suite: **10/10 tests pass** (ghost E2E takes ~54s; loads the 3.1GB model).
+
+Still needing a live, unlocked machine: dictation injection into a controlled target,
+live ghost session via hotkey (mic path), and eyes-on Phase 3 UI checks (pill, tray,
+settings, scratch-that). Screen locked while Jesse is away — global hotkeys and
+synthetic keys are swallowed by the lock screen (IOConsoleLocked=Yes), which also
+explains the one failed E2E attempt right after resume.
+
+## 2026-07-02 — Phase 1 verifier subagent verdict: PASS (code-verifiable criteria)
+
+Fresh-context subagent, instructed not to trust this log, independently: ran the full
+test suite (all green), re-ran the Parakeet test with --nocapture and confirmed the
+real transcript, traced every pipeline stage to file:line, and grepped the tree for
+the privacy invariant (only network client is the Ollama one; no telemetry). Verdict:
+**PASS on all code-verifiable criteria, no bugs found.** Open items it confirmed as
+environment-limited, not failures: live injection E2E (needs Jesse — BLOCKERS.md),
+Windows build (no Windows machine), tailnet latency. (It also caught that an earlier
+"6/6 tests" line here went stale after Phases 3/4 added tests — current suite is 10/10
+including the ghost E2E, which postdates its 9/9 count.)
+
+## 2026-07-02 — Phases 2 & 3 verifier subagent verdict: PASS
+
+Fresh-context subagent verified all Phase 2 and Phase 3 criteria: config layering
+(default/toml/env, with unit tests), mock passthrough + fallback-to-raw, keep_alive +
+startup warm-up, and **independent latency measurements** (its own python calls:
+620ms–2s warm under concurrent-compile CPU contention — corroborates the quiet-machine
+404–701ms). Phase 3: pill/tray/settings/per-app-profiles/scratch-that all traced to
+code with no defects; settings JS field names verified against the Config serde names
+(no mismatch, non-form fields preserved on save). `cargo check` clean. Remaining
+eyes-on items match BLOCKERS.md's live checklist exactly. **No bugs found.**
+
+## 2026-07-02 — Phase 4 verifier subagent verdict: PASS (all 8 criteria)
+
+Fresh-context subagent independently traced the whole ghost pipeline to code, verified
+the privacy invariant in ghost paths, and **ran the E2E itself** (84s, exit 0): 3 VAD
+chunks from the 3-sentence fixture, near-verbatim Whisper transcripts, 2 speakers with
+correct [1,0,1] attribution via real pyannote+3dspeaker diarization (not the
+fallback), and a schema-exact note. Minor deviations it flagged are now addressed:
+filename slug derived from transcript content (re-verified:
+`2026-07-02-1618-good-morning-everyone-lets.md`, suite green at 98s) and the missing
+"me" speaker label documented in BLOCKERS.md as a deliberate lean-scope limitation.
+Its honest-gaps list (live mic toggle, BlackHole loopback, the 500ms worker drain
+loop, live summarize round-trip) matches BLOCKERS.md's live checklist.
