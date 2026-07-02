@@ -14,17 +14,21 @@ pub struct Config {
     pub hotkey: String,
     /// Directory holding the Parakeet ONNX model files. When unset, falls back
     /// to ./models (dev checkout) then ~/.config/shout/models.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub parakeet_model_dir: Option<PathBuf>,
     /// Ghost-mode toggle shortcut.
     pub ghost_hotkey: String,
     /// Input device for ghost mode by name (e.g. an Aggregate Device that
     /// combines the mic with a BlackHole loopback). Default input when unset.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ghost_input_device: Option<String>,
     /// Obsidian vault root; meeting notes go to <vault>/Meetings/.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub vault_dir: Option<PathBuf>,
     /// Model used for ghost-mode summarization (batch, can be bigger).
     pub ollama_summary_model: String,
     /// Path to the Whisper ggml model file. Defaults under the models dir.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub whisper_model: Option<PathBuf>,
     /// Per-app style instructions for cleanup, keyed by app name
     /// (e.g. Slack = "casual tone, contractions fine").
