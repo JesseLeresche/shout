@@ -52,3 +52,23 @@ his terminal; testing policy changed to never drive the desktop while the machin
 use). (2) Windows build/test — no Windows machine here (see BLOCKERS.md).
 (3) Fresh-context verifier subagent still to run. Session paused by Jesse mid-Phase-1
 verification.
+
+## 2026-07-02 — Ghost mode drafted during pause (NOT compiled or verified)
+
+While paused (quiet file-writes only — no builds/launches/audio per Jesse's pause),
+drafted the full Phase 4 pipeline: `audio/vad.rs` (Silero via sherpa-onnx, 16k),
+`audio/mod.rs` streaming linear resampler (device rate → 16k, with unit tests),
+`stt/whisper.rs` (whisper-rs 0.16), `pkm/obsidian.rs` (note writer per the spec schema,
+with unit test), `ghost.rs` (toggle-hotkey session: continuous capture → VAD chunks
+spooled to ~/.config/shout/sessions → batch Whisper → sherpa-onnx pyannote diarization
+with single-speaker fallback → Ollama summarize with 300s timeout → Meetings/ note),
+`llm/ollama.rs` summarize(), config additions, second global shortcut (alt+shift+g).
+
+Mac loopback decision (spec left it open): BlackHole + Aggregate Device via
+`ghost_input_device` config; no ScreenCaptureKit bridge. Documented in README/BLOCKERS.
+
+Diarization: official sherpa-onnx crate ships pyannote segmentation + speaker embedding
++ clustering, so no Python sidecar needed (spec's fallback avoided).
+
+**None of this has been compiled yet** — first `cargo check`, model downloads
+(--ghost, ~3.6GB), and live verification wait for resume.

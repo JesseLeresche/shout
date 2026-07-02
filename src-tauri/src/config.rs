@@ -15,6 +15,17 @@ pub struct Config {
     /// Directory holding the Parakeet ONNX model files. When unset, falls back
     /// to ./models (dev checkout) then ~/.config/shout/models.
     pub parakeet_model_dir: Option<PathBuf>,
+    /// Ghost-mode toggle shortcut.
+    pub ghost_hotkey: String,
+    /// Input device for ghost mode by name (e.g. an Aggregate Device that
+    /// combines the mic with a BlackHole loopback). Default input when unset.
+    pub ghost_input_device: Option<String>,
+    /// Obsidian vault root; meeting notes go to <vault>/Meetings/.
+    pub vault_dir: Option<PathBuf>,
+    /// Model used for ghost-mode summarization (batch, can be bigger).
+    pub ollama_summary_model: String,
+    /// Path to the Whisper ggml model file. Defaults under the models dir.
+    pub whisper_model: Option<PathBuf>,
 }
 
 impl Default for Config {
@@ -24,6 +35,11 @@ impl Default for Config {
             ollama_model: "qwen2.5:7b".into(),
             hotkey: "alt+space".into(),
             parakeet_model_dir: None,
+            ghost_hotkey: "alt+shift+g".into(),
+            ghost_input_device: None,
+            vault_dir: None,
+            ollama_summary_model: "qwen2.5:7b".into(),
+            whisper_model: None,
         }
     }
 }
@@ -57,26 +73,42 @@ impl Config {
         }
     }
 
-    /// Where the Parakeet model lives: explicit config > repo models/ (dev builds)
-    /// > ~/.config/shout/models.
-    pub fn parakeet_dir(&self) -> PathBuf {
-        if let Some(d) = &self.parakeet_model_dir {
-            return d.clone();
-        }
+    /// Root directory for models: repo models/ (dev builds) > ~/.config/shout/models.
+    pub fn models_root() -> PathBuf {
         #[cfg(debug_assertions)]
         {
             let dev = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
                 .parent()
                 .expect("manifest dir has parent")
-                .join("models")
-                .join(PARAKEET_DIR_NAME);
+                .join("models");
             if dev.exists() {
                 return dev;
             }
         }
         dirs::home_dir()
-            .map(|h| h.join(".config/shout/models").join(PARAKEET_DIR_NAME))
-            .unwrap_or_else(|| PathBuf::from("models").join(PARAKEET_DIR_NAME))
+            .map(|h| h.join(".config/shout/models"))
+            .unwrap_or_else(|| PathBuf::from("models"))
+    }
+
+    pub fn parakeet_dir(&self) -> PathBuf {
+        self.parakeet_model_dir
+            .clone()
+            .unwrap_or_else(|| Self::models_root().join(PARAKEET_DIR_NAME))
+    }
+
+    pub fn whisper_model_path(&self) -> PathBuf {
+        self.whisper_model
+            .clone()
+            .unwrap_or_else(|| Self::models_root().join("ggml-large-v3.bin"))
+    }
+
+    /// Where meeting notes are written; defaults to ~/Documents/ShoutVault.
+    pub fn vault_dir(&self) -> PathBuf {
+        self.vault_dir.clone().unwrap_or_else(|| {
+            dirs::home_dir()
+                .map(|h| h.join("Documents/ShoutVault"))
+                .unwrap_or_else(|| PathBuf::from("ShoutVault"))
+        })
     }
 }
 

@@ -19,10 +19,27 @@ pub fn spawn(rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
     std::thread::spawn(move || run(rx, pipe_tx, app));
 }
 
-struct ActiveRecording {
+pub struct ActiveRecording {
     stream: cpal::Stream,
     buf: Arc<Mutex<Vec<f32>>>,
     sample_rate: u32,
+}
+
+impl ActiveRecording {
+    pub fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+
+    /// Take everything captured since the last drain.
+    pub fn drain(&self) -> Vec<f32> {
+        std::mem::take(&mut *self.buf.lock().unwrap())
+    }
+
+    /// Stop the stream and return any remaining audio.
+    pub fn stop(self) -> Vec<f32> {
+        drop(self.stream);
+        std::mem::take(&mut *self.buf.lock().unwrap())
+    }
 }
 
 fn run(rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
@@ -47,15 +64,15 @@ fn run(rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
             }
             AudioCmd::StopAndProcess => {
                 if let Some(rec) = active.take() {
-                    drop(rec.stream);
-                    let samples = std::mem::take(&mut *rec.buf.lock().unwrap());
+                    let sample_rate = rec.sample_rate();
+                    let samples = rec.stop();
                     eprintln!(
                         "shout: captured {:.2}s of audio",
-                        samples.len() as f32 / rec.sample_rate as f32
+                        samples.len() as f32 / sample_rate as f32
                     );
                     let _ = pipe_tx.send(PipeJob {
                         samples,
-                        sample_rate: rec.sample_rate,
+                        sample_rate,
                     });
                 }
             }
@@ -64,10 +81,23 @@ fn run(rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
 }
 
 fn start_recording() -> Result<ActiveRecording> {
+    start_recording_on(None)
+}
+
+/// Start capturing from a named input device (exact match), or the default
+/// input device when `name` is None.
+pub fn start_recording_on(name: Option<&str>) -> Result<ActiveRecording> {
     let host = cpal::default_host();
-    let device = host
-        .default_input_device()
-        .ok_or_else(|| anyhow!("no input device available"))?;
+    let device = match name {
+        Some(wanted) => host
+            .input_devices()
+            .context("enumerate input devices")?
+            .find(|d| d.name().map(|n| n == wanted).unwrap_or(false))
+            .ok_or_else(|| anyhow!("input device '{wanted}' not found"))?,
+        None => host
+            .default_input_device()
+            .ok_or_else(|| anyhow!("no input device available"))?,
+    };
     let supported = device
         .default_input_config()
         .context("no default input config")?;

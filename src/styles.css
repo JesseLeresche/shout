@@ -41,7 +41,8 @@ h2 {
 }
 
 #dot.idle { background: #3ddc84; }
-#dot.recording { background: #ff4d4f; }
+#dot.recording, #dot.ghost-recording { background: #ff4d4f; }
+#dot.ghost-processing { background: #a06cd5; }
 #dot.transcribing, #dot.cleaning, #dot.injecting, #dot.loading-model { background: #f5a623; }
 #dot.error { background: #d0021b; }
 

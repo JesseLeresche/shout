@@ -14,6 +14,12 @@ All crates chosen are cross-platform (cpal/WASAPI, enigo, arboard, global-shortc
 but there is no Windows machine in this environment to build or test on. Needs a
 Windows box: `npm install && npm run tauri dev`, then verify hotkey → dictation → paste.
 
+## BlackHole install (Phase 4 system-audio loopback)
+Decision (per ARCHITECTURE.md open question): BlackHole virtual device + macOS Aggregate
+Device, selected via `ghost_input_device` config — no ScreenCaptureKit bridge. Installing
+BlackHole needs admin: `brew install blackhole-2ch`, then create an Aggregate Device
+(mic + BlackHole) in Audio MIDI Setup. Mic-only ghost capture works without any of this.
+
 ## Real tailnet Ollama host (Phase 2)
 Config + `SHOUT_OLLAMA_URL` support any URL; local Ollama (localhost:11434, qwen2.5:7b)
 is used for development. If you want the tailnet box wired in, provide its MagicDNS name.

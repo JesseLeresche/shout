@@ -23,6 +23,22 @@ npm run tauri dev
 
 Hold **alt+space**, speak, release.
 
+## Ghost mode (meeting capture)
+
+Press **alt+shift+g** to start capturing; press again to stop. Speech (silence removed
+by Silero VAD) is buffered to `~/.config/shout/sessions/`, then batch-transcribed with
+Whisper Large V3, diarized, summarized via Ollama, and written as one markdown note to
+`<vault>/Meetings/` (vault defaults to `~/Documents/ShoutVault`; set `vault_dir` to your
+Obsidian vault).
+
+Ghost models are separate (~3.6GB total): `./scripts/download-models.sh --ghost`.
+
+**System audio (the other side of a call):** install
+[BlackHole 2ch](https://github.com/ExistentialAudio/BlackHole), create an Aggregate
+Device in Audio MIDI Setup combining your mic + BlackHole, route app output to a
+Multi-Output Device that includes BlackHole, and set `ghost_input_device` to the
+aggregate device's name. Without it, ghost mode captures your mic only.
+
 ### macOS permissions
 
 - **Microphone** — prompted on first recording.
@@ -36,9 +52,14 @@ Hold **alt+space**, speak, release.
 
 ```toml
 ollama_url = "http://localhost:11434"   # or your tailnet host
-ollama_model = "qwen2.5:7b"
+ollama_model = "qwen2.5:7b"             # dictation cleanup (small, fast)
+ollama_summary_model = "qwen2.5:7b"     # ghost summaries (bigger is fine, batch)
 hotkey = "alt+space"
+ghost_hotkey = "alt+shift+g"
+# vault_dir = "/path/to/ObsidianVault"
+# ghost_input_device = "Shout Aggregate"  # mic+BlackHole aggregate for system audio
 # parakeet_model_dir = "/path/to/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8"
+# whisper_model = "/path/to/ggml-large-v3.bin"
 ```
 
 `SHOUT_OLLAMA_URL` overrides `ollama_url`.
