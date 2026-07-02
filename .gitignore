@@ -1,0 +1,4 @@
+node_modules/
+models/
+FABLE_BUILD_PROMPT.md
+.vscode/
