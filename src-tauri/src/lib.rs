@@ -32,6 +32,8 @@ fn save_config(cfg: config::Config) -> Result<(), String> {
     }
     let toml = toml::to_string_pretty(&cfg).map_err(|e| e.to_string())?;
     std::fs::write(&path, toml).map_err(|e| e.to_string())?;
+    // The streaming-mode toggle applies immediately; other changes on restart.
+    pipeline::LIVE_TYPING.store(cfg.live_typing, std::sync::atomic::Ordering::Relaxed);
     Ok(())
 }
 
@@ -88,16 +90,10 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Park the pill bottom-center of the primary monitor.
-            if let Some(pill) = app.get_webview_window("pill") {
-                if let Ok(Some(mon)) = pill.primary_monitor() {
-                    let m = mon.size();
-                    let w = pill.outer_size().map(|s| s.width).unwrap_or(240);
-                    let _ = pill.set_position(tauri::PhysicalPosition::new(
-                        ((m.width - w) / 2) as i32,
-                        (m.height as i32) - 140,
-                    ));
-                }
+            // The pill is positioned on each show (pipeline::status) on
+            // whichever monitor holds the cursor.
+            if app.get_webview_window("pill").is_none() {
+                eprintln!("shout: WARNING pill window was not created");
             }
             Ok(())
         })

@@ -64,8 +64,10 @@ fn run(device: Option<String>, rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>,
                 Ok(cmd) => cmd,
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
                     if let Some(rec) = &active {
+                        let samples = rec.snapshot();
+                        eprintln!("shout: partial snapshot {:.2}s", samples.len() as f32 / rec.sample_rate() as f32);
                         let _ = pipe_tx.send(PipeJob::Partial {
-                            samples: rec.snapshot(),
+                            samples,
                             sample_rate: rec.sample_rate(),
                         });
                     }

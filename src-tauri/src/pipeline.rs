@@ -13,6 +13,14 @@ pub enum PipeJob {
     Final { samples: Vec<f32>, sample_rate: u32 },
 }
 
+/// Whether partials are typed at the cursor (true) or streamed to the pill
+/// only (false). Atomic so the settings UI can flip it without a restart.
+pub static LIVE_TYPING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn live_typing() -> bool {
+    LIVE_TYPING.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 /// Last emitted status, so a webview that loads late can pull it
 /// (events emitted before the listener attaches are lost).
 static LAST_STATUS: std::sync::Mutex<Option<(String, Option<String>)>> =
@@ -34,12 +42,53 @@ pub fn status(app: &AppHandle, state: &str, detail: Option<String>) {
     );
     // The overlay pill is visible whenever something is happening.
     use tauri::Manager;
-    if let Some(pill) = app.get_webview_window("pill") {
-        let _ = if state == "idle" {
-            pill.hide()
-        } else {
-            pill.show()
-        };
+    let Some(pill) = app.get_webview_window("pill") else {
+        eprintln!("shout: pill window missing!");
+        return;
+    };
+    if state == "idle" {
+        let _ = pill.hide();
+        return;
+    }
+    // Park it bottom-center of the monitor the cursor is on — the user may
+    // be working on any display. Containment test done in physical pixels
+    // (cursor_position, monitor position/size are all physical).
+    match (
+        app.cursor_position(),
+        pill.outer_size(),
+        app.available_monitors(),
+    ) {
+        (Ok(cursor), Ok(size), Ok(monitors)) => {
+            let mon = monitors
+                .iter()
+                .find(|m| {
+                    let p = m.position();
+                    let s = m.size();
+                    cursor.x >= p.x as f64
+                        && cursor.x < (p.x + s.width as i32) as f64
+                        && cursor.y >= p.y as f64
+                        && cursor.y < (p.y + s.height as i32) as f64
+                })
+                .or_else(|| monitors.first());
+            if let Some(mon) = mon {
+                // Work area excludes the menu bar and Dock.
+                let wa = mon.work_area();
+                let margin = (16.0 * mon.scale_factor()) as i32;
+                let _ = pill.set_position(tauri::PhysicalPosition::new(
+                    wa.position.x + (wa.size.width.saturating_sub(size.width) / 2) as i32,
+                    wa.position.y + wa.size.height as i32 - size.height as i32 - margin,
+                ));
+            }
+        }
+        (c, o, m) => eprintln!(
+            "shout: pill positioning skipped (cursor {:?} size {:?} monitors {:?})",
+            c.err(),
+            o.err(),
+            m.err()
+        ),
+    }
+    if let Err(e) = pill.show() {
+        eprintln!("shout: pill show failed: {e}");
     }
 }
 
@@ -84,6 +133,7 @@ pub fn spawn(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
 }
 
 fn run(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
+    LIVE_TYPING.store(cfg.live_typing, std::sync::atomic::Ordering::Relaxed);
     // Warm Ollama concurrently with the STT model load.
     {
         let cfg = cfg.clone();
@@ -133,11 +183,12 @@ fn run(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
                     continue;
                 }
                 let text = parakeet.transcribe(&samples, sample_rate);
+                eprintln!("shout: partial transcript: {text:?}");
                 if text.is_empty() {
                     continue;
                 }
                 let _ = app.emit("shout:partial", serde_json::json!({ "text": text }));
-                if cfg.live_typing {
+                if live_typing() {
                     if let Err(e) = live_replace(&app, &mut live_typed, &text) {
                         eprintln!("shout: live typing failed: {e:#}");
                     }
@@ -197,7 +248,7 @@ fn run(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
                 let cleaned = ollama::cleanup(&cfg, &raw, target_app.as_deref());
                 eprintln!("shout: cleaned: {cleaned:?}");
                 status(&app, "injecting", None);
-                let result = if cfg.live_typing {
+                let result = if !live_typed.is_empty() || live_typing() {
                     // Correct the streamed raw text into the cleaned version.
                     live_replace(&app, &mut live_typed, &cleaned)
                 } else {

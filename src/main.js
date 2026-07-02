@@ -41,6 +41,7 @@ const field = (name) => document.getElementById(`f-${name}`);
 async function loadSettings() {
   const cfg = await invoke("get_config");
   for (const name of FIELDS) field(name).value = cfg[name] ?? "";
+  field("live_typing").checked = !!cfg.live_typing;
   document.getElementById("hk-dictate").textContent = cfg.hotkey;
   document.getElementById("hk-ghost").textContent = cfg.ghost_hotkey;
   return cfg;
@@ -59,11 +60,13 @@ document.getElementById("save").addEventListener("click", async () => {
   for (const req of ["ollama_url", "ollama_model", "ollama_summary_model", "hotkey", "ghost_hotkey"]) {
     if (!cfg[req]) cfg[req] = currentCfg?.[req];
   }
+  cfg.live_typing = field("live_typing").checked;
   const note = document.getElementById("save-note");
   try {
     await invoke("save_config", { cfg });
     currentCfg = cfg;
-    note.textContent = "saved — restart shout to apply hotkey changes";
+    note.textContent =
+      "saved — streaming mode applies now; hotkey/mic changes need a restart";
   } catch (e) {
     note.textContent = `save failed: ${e}`;
   }

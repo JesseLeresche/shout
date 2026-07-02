@@ -87,6 +87,17 @@ kbd {
   font-size: 0.85rem;
 }
 
+#settings label.check {
+  justify-content: flex-start;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+#settings label.check input {
+  flex: 0 0 auto;
+  width: auto;
+}
+
 #settings input {
   flex: 1;
   max-width: 240px;
