@@ -23,6 +23,15 @@ jobs:
 
       - run: npm ci
 
+      - name: Cache dictation model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: models-${{ hashFiles('scripts/download-models.sh') }}
+
+      - name: Download dictation model
+        run: ./scripts/download-models.sh
+
       - name: cargo build
         run: cargo build --verbose
         working-directory: src-tauri
