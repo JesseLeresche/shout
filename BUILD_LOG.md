@@ -150,3 +150,14 @@ environment-limited, not failures: live injection E2E (needs Jesse — BLOCKERS.
 Windows build (no Windows machine), tailnet latency. (It also caught that an earlier
 "6/6 tests" line here went stale after Phases 3/4 added tests — current suite is 10/10
 including the ghost E2E, which postdates its 9/9 count.)
+
+## 2026-07-02 — Phases 2 & 3 verifier subagent verdict: PASS
+
+Fresh-context subagent verified all Phase 2 and Phase 3 criteria: config layering
+(default/toml/env, with unit tests), mock passthrough + fallback-to-raw, keep_alive +
+startup warm-up, and **independent latency measurements** (its own python calls:
+620ms–2s warm under concurrent-compile CPU contention — corroborates the quiet-machine
+404–701ms). Phase 3: pill/tray/settings/per-app-profiles/scratch-that all traced to
+code with no defects; settings JS field names verified against the Config serde names
+(no mismatch, non-form fields preserved on save). `cargo check` clean. Remaining
+eyes-on items match BLOCKERS.md's live checklist exactly. **No bugs found.**
