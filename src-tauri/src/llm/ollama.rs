@@ -43,6 +43,18 @@ pub fn cleanup(cfg: &Config, raw: &str, target_app: Option<&str>) -> String {
     }
 }
 
+/// Best-effort startup warm-up so the first dictation doesn't eat the
+/// ~10s model cold-load. Ignores every failure (Ollama may be down).
+pub fn warm(cfg: &Config) {
+    if std::env::var("SHOUT_MOCK_LLM").is_ok() {
+        return;
+    }
+    match request(cfg, &cfg.ollama_model, "reply with: ok", "ok", Duration::from_secs(120)) {
+        Ok(_) => eprintln!("shout: ollama model {} warmed", cfg.ollama_model),
+        Err(e) => eprintln!("shout: ollama warm-up skipped ({e:#})"),
+    }
+}
+
 fn client() -> &'static reqwest::blocking::Client {
     static CLIENT: OnceLock<reqwest::blocking::Client> = OnceLock::new();
     CLIENT.get_or_init(|| {
@@ -97,6 +109,9 @@ fn request(
         ],
         "temperature": 0.2,
         "stream": false,
+        // Ollama extension: keep the model resident so dictation stays warm
+        // (~0.3-0.7s warm vs ~10s cold-load on an M-series).
+        "keep_alive": "30m",
     });
     let resp = client()
         .post(&url)
