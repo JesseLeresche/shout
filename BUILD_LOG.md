@@ -191,3 +191,31 @@ capturing from "MacBook Pro Microphone" (48kHz) → 3.72s captured, peak 0.956 �
 Parakeet: "Hello World Quick Test to see if this is working." → Ollama cleanup:
 "Hello, World. Quick test to see if this is working." → **injected 51 chars at the
 cursor** — confirmed by Jesse: "works like a charm". **Phase 1 fully verified.**
+
+## 2026-07-02 — Ghost mode confirmed live; ALL FOUR PHASES DONE
+
+One more live bug from Jesse's first ghost attempt: "no speech detected" — ghost used
+the unset `ghost_input_device` → system default → the same silent Steam virtual mic.
+Fixed: device priority is now ghost_input_device > input_device (dictation mic) >
+system default, and the note's `source` field records the device actually used.
+
+Second attempt, real speech, user-at-keyboard — Jesse: "There seems to all be
+working". Hard evidence on disk at
+`~/Documents/ShoutVault/Meetings/2026-07-02-1822-this-is-a-ghost.md`:
+content-derived slug, frontmatter with `source: MacBook Pro Microphone`,
+`speakers: [speaker_1, speaker_2]`, LLM summary with correctly-extracted action items
+("Win the Powerball", from the spoken to-do list), and a near-verbatim Whisper
+transcript with per-line speaker + MM:SS timestamps. Another live dictation in the
+same session ("Danger zone." → 12 chars injected) confirmed dictation still green.
+
+### Final state
+- **Phase 1** dictation: verifier PASS + live user-confirmed E2E ✓
+- **Phase 2** hardening: verifier PASS, latency measured twice, keep_alive+warm-up ✓
+- **Phase 3** polish: verifier PASS (no defects); exercised live via the working
+  pill/tray/settings during Jesse's tests ✓
+- **Phase 4** ghost: verifier PASS all 8 criteria + live mic session → real note ✓
+- Privacy invariant independently confirmed twice: only network egress in the tree
+  is the configured Ollama URL.
+- Remaining user-dependent items live in BLOCKERS.md: Windows build/test (no Windows
+  machine here), BlackHole install for system-audio loopback, real tailnet host,
+  optional "me" speaker enrollment.

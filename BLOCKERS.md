@@ -1,20 +1,11 @@
 # Blockers — things that need Jesse
 
-## Live checks needing you at an unlocked machine (~3 minutes total)
-Everything below is code-complete and headlessly verified; these confirm the live
-desktop legs (the lock screen swallows global hotkeys, so I can't automate them while
-you're away). The dev app should be running (`npm run tauri dev` if not).
-1. **Dictation**: click into any text field, hold `alt+space`, say a sentence,
-   release → cleaned text should appear at your cursor within ~2s. If nothing
-   appears: System Settings → Privacy & Security → Accessibility → enable your
-   terminal (or shout.app).
-2. **Scratch that**: immediately dictate the words "scratch that" → the previous
-   dictation should be erased.
-3. **Ghost mode**: press `alt+shift+g`, chat for ~30s, press again → a note appears
-   in `~/Documents/ShoutVault/Meetings/` (pill shows "processing meeting…" while the
-   3GB Whisper model loads+runs; allow a minute or two).
-4. **Eyes-on UI**: pill appears bottom-center during activity; tray menu has
-   ghost/show/quit; settings form saves to ~/.config/shout/config.toml.
+## ~~Live checks~~ — done 2026-07-02
+Dictation and ghost mode both confirmed live by Jesse ("works like a charm" /
+"There seems to all be working"); evidence in BUILD_LOG.md. Note: the system default
+input was a silent Steam virtual mic — your config pins
+`input_device = "MacBook Pro Microphone"`; change it in the settings window if you
+switch mics.
 
 ## macOS permissions (needed for end-to-end dictation)
 - **Microphone**: macOS will prompt on first recording — click Allow.
