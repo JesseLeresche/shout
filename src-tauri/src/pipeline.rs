@@ -11,7 +11,21 @@ pub struct PipeJob {
     pub sample_rate: u32,
 }
 
+/// Last emitted status, so a webview that loads late can pull it
+/// (events emitted before the listener attaches are lost).
+static LAST_STATUS: std::sync::Mutex<Option<(String, Option<String>)>> =
+    std::sync::Mutex::new(None);
+
+pub fn last_status() -> serde_json::Value {
+    let guard = LAST_STATUS.lock().unwrap();
+    let (state, detail) = guard
+        .clone()
+        .unwrap_or_else(|| ("starting".into(), None));
+    serde_json::json!({ "state": state, "detail": detail })
+}
+
 pub fn status(app: &AppHandle, state: &str, detail: Option<String>) {
+    *LAST_STATUS.lock().unwrap() = Some((state.to_string(), detail.clone()));
     let _ = app.emit(
         "shout:status",
         serde_json::json!({ "state": state, "detail": detail }),

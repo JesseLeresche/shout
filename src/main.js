@@ -8,11 +8,16 @@ const lastEl = document.getElementById("last");
 const rawEl = document.getElementById("raw");
 const cleanedEl = document.getElementById("cleaned");
 
-listen("shout:status", ({ payload }) => {
+function showStatus(payload) {
   stateEl.textContent = payload.state;
   dotEl.className = payload.state;
   detailEl.textContent = payload.detail ?? "";
-});
+}
+
+listen("shout:status", ({ payload }) => showStatus(payload));
+
+// Catch up on the status emitted before this webview attached its listener.
+invoke("get_status").then(showStatus);
 
 listen("shout:result", ({ payload }) => {
   lastEl.hidden = false;

@@ -20,6 +20,11 @@ fn get_config() -> config::Config {
 }
 
 #[tauri::command]
+fn get_status() -> serde_json::Value {
+    pipeline::last_status()
+}
+
+#[tauri::command]
 fn save_config(cfg: config::Config) -> Result<(), String> {
     let path = config::Config::config_path().ok_or("no home directory")?;
     if let Some(dir) = path.parent() {
@@ -42,7 +47,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![get_config, save_config])
+        .invoke_handler(tauri::generate_handler![get_config, save_config, get_status])
         .on_window_event(|window, event| {
             // Closing the settings window hides to tray; quit via tray menu.
             if window.label() == "main" {
