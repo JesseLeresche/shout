@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "shout-scaffold",
+  "productName": "shout",
   "version": "0.1.0",
   "identifier": "dev.shout.app",
   "build": {
@@ -8,11 +8,27 @@
   },
   "app": {
     "withGlobalTauri": true,
+    "macOSPrivateApi": true,
     "windows": [
       {
-        "title": "shout-scaffold",
-        "width": 800,
-        "height": 600
+        "title": "shout",
+        "width": 460,
+        "height": 560
+      },
+      {
+        "label": "pill",
+        "url": "pill.html",
+        "title": "shout pill",
+        "width": 240,
+        "height": 48,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "visible": false,
+        "focus": false,
+        "shadow": false
       }
     ],
     "security": {

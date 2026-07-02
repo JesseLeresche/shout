@@ -1,25 +1,29 @@
 [package]
-name = "shout-scaffold"
+name = "shout"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Local, self-hosted voice dictation"
+authors = ["Jesse LeResche"]
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "shout_scaffold_lib"
+name = "shout_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
+tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
+tauri-plugin-global-shortcut = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-
+toml = "1"
+dirs = "6"
+reqwest = { version = "0.12", features = ["blocking", "json"] }
+cpal = "0.18"
+sherpa-onnx = { version = "1.13", default-features = false, features = ["static"] }
+arboard = "3"
+enigo = "0.6"
+anyhow = "1"
+whisper-rs = "0.16"
+chrono = "0.4"
