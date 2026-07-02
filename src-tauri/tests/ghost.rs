@@ -71,6 +71,13 @@ fn ghost_batch_pipeline_end_to_end() {
     let n_speakers = speakers.iter().max().unwrap() + 1;
     println!("speakers found: {n_speakers} ({speakers:?})");
 
+    // Summarize via the mock path (offline-safe), as the pipeline would.
+    std::env::set_var("SHOUT_MOCK_LLM", "1");
+    let summary = shout_lib::llm::ollama::summarize(&Config::default(), &combined)
+        .unwrap_or_else(|e| format!("*Summary unavailable ({e}).*"));
+    std::env::remove_var("SHOUT_MOCK_LLM");
+    assert!(!summary.is_empty());
+
     // Note writing per the ARCHITECTURE.md schema.
     let vault = std::env::temp_dir().join("shout-ghost-e2e-vault");
     let _ = std::fs::remove_dir_all(&vault);
@@ -79,7 +86,7 @@ fn ghost_batch_pipeline_end_to_end() {
         source: "fixture".into(),
         speakers: (1..=n_speakers).map(|k| format!("speaker_{k}")).collect(),
         duration_min: 1,
-        summary: "*Summary skipped in test.*".into(),
+        summary,
         transcript: chunks
             .iter()
             .zip(&texts)

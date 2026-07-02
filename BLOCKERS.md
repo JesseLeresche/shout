@@ -27,6 +27,13 @@ All crates chosen are cross-platform (cpal/WASAPI, enigo, arboard, global-shortc
 but there is no Windows machine in this environment to build or test on. Needs a
 Windows box: `npm install && npm run tauri dev`, then verify hotkey → dictation → paste.
 
+## Known limitation: no "me" speaker label (Phase 4)
+The spec's example note shows `speakers: [me, speaker_1, …]`. Identifying which
+diarized cluster is *you* needs a voice-enrollment sample and embedding comparison —
+deliberately out of scope for the lean build. All speakers are labeled speaker_N.
+If you want it: record a ~10s enrollment clip and we add a cosine-similarity match
+against the existing 3dspeaker embeddings.
+
 ## BlackHole install (Phase 4 system-audio loopback)
 Decision (per ARCHITECTURE.md open question): BlackHole virtual device + macOS Aggregate
 Device, selected via `ghost_input_device` config — no ScreenCaptureKit bridge. Installing

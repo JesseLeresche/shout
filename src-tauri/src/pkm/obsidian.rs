@@ -19,14 +19,37 @@ pub struct MeetingNote {
     pub transcript: Vec<TranscriptLine>,
 }
 
-/// Write one note per meeting: <vault>/Meetings/YYYY-MM-DD-HHmm-meeting.md
+/// Slug from the first words of the transcript, e.g. "good-morning-everyone".
+fn slug(note: &MeetingNote) -> String {
+    let s: String = note
+        .transcript
+        .first()
+        .map(|l| l.text.as_str())
+        .unwrap_or("meeting")
+        .split_whitespace()
+        .take(4)
+        .collect::<Vec<_>>()
+        .join("-")
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '-')
+        .collect::<String>()
+        .to_lowercase();
+    if s.is_empty() {
+        "meeting".into()
+    } else {
+        s
+    }
+}
+
+/// Write one note per meeting: <vault>/Meetings/YYYY-MM-DD-HHmm-<slug>.md
 /// following the schema in ARCHITECTURE.md.
 pub fn write_meeting_note(vault: &Path, note: &MeetingNote) -> Result<PathBuf> {
     let dir = vault.join("Meetings");
     std::fs::create_dir_all(&dir).with_context(|| format!("create {}", dir.display()))?;
     let path = dir.join(format!(
-        "{}-meeting.md",
-        note.started_at.format("%Y-%m-%d-%H%M")
+        "{}-{}.md",
+        note.started_at.format("%Y-%m-%d-%H%M"),
+        slug(note)
     ));
 
     let mut body = String::new();
@@ -75,7 +98,7 @@ mod tests {
             }],
         };
         let path = write_meeting_note(&tmp, &note).unwrap();
-        assert_eq!(path.file_name().unwrap(), "2026-07-02-1430-meeting.md");
+        assert_eq!(path.file_name().unwrap(), "2026-07-02-1430-hello.md");
         let s = std::fs::read_to_string(&path).unwrap();
         assert!(s.starts_with("---\ndate: 2026-07-02T14:30\n"));
         assert!(s.contains("speakers: [speaker_1, speaker_2]"));
