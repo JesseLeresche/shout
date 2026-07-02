@@ -21,6 +21,7 @@ fn fixture(name: &str) -> Vec<f32> {
 }
 
 #[test]
+#[ignore = "requires ghost models (scripts/download-models.sh --ghost); not present in CI"]
 fn ghost_batch_pipeline_end_to_end() {
     let models = Config::models_root();
     for needed in ["silero_vad.onnx", "ggml-large-v3.bin"] {
