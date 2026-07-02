@@ -68,6 +68,11 @@ pub fn spawn(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
 }
 
 fn run(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
+    // Warm Ollama concurrently with the STT model load.
+    {
+        let cfg = cfg.clone();
+        std::thread::spawn(move || ollama::warm(&cfg));
+    }
     status(&app, "loading-model", None);
     let parakeet = match Parakeet::load(&cfg.parakeet_dir()) {
         Ok(p) => {
