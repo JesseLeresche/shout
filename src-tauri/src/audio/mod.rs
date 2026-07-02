@@ -1,6 +1,31 @@
 pub mod capture;
 pub mod vad;
 
+/// Magnitude of one frequency in a sample window (Goertzel — cheaper than an
+/// FFT when only a handful of bands are needed).
+fn goertzel(samples: &[f32], sample_rate: f32, freq: f32) -> f32 {
+    let w = 2.0 * std::f32::consts::PI * freq / sample_rate;
+    let coeff = 2.0 * w.cos();
+    let (mut s1, mut s2) = (0f32, 0f32);
+    for &x in samples {
+        let s0 = x + coeff * s1 - s2;
+        s2 = s1;
+        s1 = s0;
+    }
+    (s1 * s1 + s2 * s2 - coeff * s1 * s2).max(0.0).sqrt() * 2.0 / samples.len() as f32
+}
+
+/// Levels for log-spaced speech-range bands (~120–3800 Hz), for the pill's
+/// live spectrogram bars.
+pub fn band_levels(samples: &[f32], sample_rate: u32) -> Vec<f32> {
+    const BANDS: usize = 12;
+    let (lo, hi) = (120f32, 3800f32);
+    let ratio = (hi / lo).powf(1.0 / (BANDS - 1) as f32);
+    (0..BANDS)
+        .map(|i| goertzel(samples, sample_rate as f32, lo * ratio.powi(i as i32)))
+        .collect()
+}
+
 /// Streaming linear resampler (mono f32). Keeps continuity across chunks.
 pub struct LinearResampler {
     step: f64,

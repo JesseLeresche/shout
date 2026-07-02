@@ -40,6 +40,14 @@ impl ActiveRecording {
         self.buf.lock().unwrap().clone()
     }
 
+    /// Samples appended since `cursor`; advances the cursor.
+    pub fn tail_since(&self, cursor: &mut usize) -> Vec<f32> {
+        let buf = self.buf.lock().unwrap();
+        let from = (*cursor).min(buf.len());
+        *cursor = buf.len();
+        buf[from..].to_vec()
+    }
+
     /// Take everything captured since the last drain.
     pub fn drain(&self) -> Vec<f32> {
         std::mem::take(&mut *self.buf.lock().unwrap())
@@ -52,24 +60,34 @@ impl ActiveRecording {
     }
 }
 
-/// How often a snapshot is sent for partial (streaming) transcription.
-const PARTIAL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(750);
+/// Wake cadence while recording: every tick streams spectrogram levels to the
+/// pill; every PARTIAL_EVERY-th tick streams a snapshot for partial STT.
+const VIZ_INTERVAL: std::time::Duration = std::time::Duration::from_millis(50);
+const PARTIAL_EVERY: u32 = 15; // 15 × 50ms = 750ms
 
 fn run(device: Option<String>, rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>, app: AppHandle) {
+    use tauri::Emitter;
     let mut active: Option<ActiveRecording> = None;
+    let mut viz_cursor = 0usize;
+    let mut tick = 0u32;
     loop {
-        // While recording, wake periodically to stream a partial snapshot.
         let cmd = if active.is_some() {
-            match rx.recv_timeout(PARTIAL_INTERVAL) {
+            match rx.recv_timeout(VIZ_INTERVAL) {
                 Ok(cmd) => cmd,
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
                     if let Some(rec) = &active {
-                        let samples = rec.snapshot();
-                        eprintln!("shout: partial snapshot {:.2}s", samples.len() as f32 / rec.sample_rate() as f32);
-                        let _ = pipe_tx.send(PipeJob::Partial {
-                            samples,
-                            sample_rate: rec.sample_rate(),
-                        });
+                        let chunk = rec.tail_since(&mut viz_cursor);
+                        if !chunk.is_empty() {
+                            let bands = crate::audio::band_levels(&chunk, rec.sample_rate());
+                            let _ = app.emit("shout:viz", serde_json::json!({ "bands": bands }));
+                        }
+                        tick += 1;
+                        if tick % PARTIAL_EVERY == 0 {
+                            let _ = pipe_tx.send(PipeJob::Partial {
+                                samples: rec.snapshot(),
+                                sample_rate: rec.sample_rate(),
+                            });
+                        }
                     }
                     continue;
                 }
@@ -90,6 +108,8 @@ fn run(device: Option<String>, rx: Receiver<AudioCmd>, pipe_tx: Sender<PipeJob>,
                     Ok(rec) => {
                         eprintln!("shout: recording started ({} Hz)", rec.sample_rate);
                         status(&app, "recording", None);
+                        viz_cursor = 0;
+                        tick = 0;
                         active = Some(rec);
                     }
                     Err(e) => {

@@ -24,6 +24,20 @@
         white-space: nowrap;
         overflow: hidden;
       }
+      #bars {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+      #bars i {
+        width: 3px;
+        height: 2px;
+        border-radius: 1.5px;
+        background: #6ee7b7;
+        transition: height 60ms linear;
+      }
       #pdot { width: 9px; height: 9px; border-radius: 50%; background: gray; }
       #pdot.recording, #pdot.ghost-recording { background: #ff4d4f; animation: pulse 1.2s infinite; }
       #pdot.transcribing, #pdot.cleaning, #pdot.injecting, #pdot.loading-model { background: #f5a623; }
@@ -33,7 +47,7 @@
     </style>
   </head>
   <body>
-    <div id="pill"><span id="pdot"></span><span id="ptext">shout</span></div>
+    <div id="pill"><span id="pdot"></span><span id="bars" hidden></span><span id="ptext">shout</span></div>
     <script>
       const labels = {
         "recording": "listening…",
@@ -59,15 +73,31 @@
         }
       }
 
+      // Live spectrogram bars while recording, with slow-decay auto-gain.
+      const barsEl = document.getElementById("bars");
+      const BARS = 12;
+      for (let i = 0; i < BARS; i++) barsEl.appendChild(document.createElement("i"));
+      let gain = 0.02;
+
       let lastState = "idle";
       window.__TAURI__.event.listen("shout:status", ({ payload }) => {
         lastState = payload.state;
         if (payload.state !== "recording") partial = null;
+        barsEl.hidden = payload.state !== "recording";
         render(payload.state);
       });
       window.__TAURI__.event.listen("shout:partial", ({ payload }) => {
         partial = payload.text;
         render(lastState);
+      });
+      window.__TAURI__.event.listen("shout:viz", ({ payload }) => {
+        if (lastState !== "recording") return;
+        const bands = payload.bands;
+        gain = Math.max(gain * 0.98, ...bands, 0.02);
+        barsEl.querySelectorAll("i").forEach((bar, i) => {
+          const level = Math.min((bands[i] ?? 0) / gain, 1);
+          bar.style.height = 2 + Math.round(level * 18) + "px";
+        });
       });
     </script>
   </body>
