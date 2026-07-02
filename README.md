@@ -5,6 +5,21 @@ desktop, speak, release — your words are transcribed locally, cleaned up by yo
 Ollama server, and typed at the cursor. Audio and transcripts never leave your machine
 except to the Ollama URL you configure. See `ARCHITECTURE.md` for the full design.
 
+[![CI](https://github.com/JesseLeresche/shout/actions/workflows/ci.yml/badge.svg)](https://github.com/JesseLeresche/shout/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+## Download
+
+Grab the latest `.dmg` from [Releases](https://github.com/JesseLeresche/shout/releases).
+It's unsigned (no Apple Developer cert), so Gatekeeper will refuse to open it on first
+launch — right-click the app and choose **Open**, or run:
+
+```sh
+xattr -cr /Applications/shout.app
+```
+
+Found a bug or have a feature idea? [Open an issue](https://github.com/JesseLeresche/shout/issues).
+
 ## Requirements
 
 - Rust + Node 20+ (`npm install` once for the Tauri CLI)
@@ -87,3 +102,7 @@ streaming) never touches the target app until the final clean paste.
 ```sh
 cd src-tauri && cargo test
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).

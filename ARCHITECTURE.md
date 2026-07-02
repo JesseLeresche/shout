@@ -5,6 +5,9 @@ desktop-only "ghost mode" that transcribes meetings into an Obsidian knowledge b
 Fully local / self-hosted — no audio leaves your devices except to your own Ollama server
 over a Tailscale tailnet.
 
+> **Status:** all four phases below are implemented and shipping (see `BUILD_LOG.md`).
+> This doc doubles as the original design record and a map of the current module layout.
+
 ## Guiding decisions (locked)
 
 | Decision | Choice | Why |
@@ -54,7 +57,7 @@ The two only touch via shared modules, so Phase 1 (dictation) ships before ghost
 | Tray icon + settings window | Tauri 2 built-in tray + a web view | UI is small: overlay pill + settings |
 | Config | `serde` + `toml` | ~/.config/shout/config.toml |
 
-## Proposed repo layout
+## Repo layout
 
 ```
 shout/
@@ -72,9 +75,10 @@ shout/
 │   │   ├── inject.rs        # clipboard-paste / enigo
 │   │   ├── pkm/obsidian.rs  # markdown note writer
 │   │   ├── ghost.rs         # batch pipeline orchestration
+│   │   ├── pipeline.rs      # dictation pipeline orchestration
 │   │   └── config.rs
 │   └── tauri.conf.json
-├── src/                     # web UI (overlay pill + settings) — Svelte or vanilla
+├── src/                     # web UI (overlay pill + settings) — vanilla JS/HTML
 ├── models/                  # downloaded ONNX / ggml models
 └── ARCHITECTURE.md
 ```
