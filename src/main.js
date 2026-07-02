@@ -1,18 +1,20 @@
-const { invoke } = window.__TAURI__.core;
+const { listen } = window.__TAURI__.event;
 
-let greetInputEl;
-let greetMsgEl;
+const stateEl = document.getElementById("state");
+const dotEl = document.getElementById("dot");
+const detailEl = document.getElementById("detail");
+const lastEl = document.getElementById("last");
+const rawEl = document.getElementById("raw");
+const cleanedEl = document.getElementById("cleaned");
 
-async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-  greetMsgEl.textContent = await invoke("greet", { name: greetInputEl.value });
-}
+listen("shout:status", ({ payload }) => {
+  stateEl.textContent = payload.state;
+  dotEl.className = payload.state;
+  detailEl.textContent = payload.detail ?? "";
+});
 
-window.addEventListener("DOMContentLoaded", () => {
-  greetInputEl = document.querySelector("#greet-input");
-  greetMsgEl = document.querySelector("#greet-msg");
-  document.querySelector("#greet-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    greet();
-  });
+listen("shout:result", ({ payload }) => {
+  lastEl.hidden = false;
+  rawEl.textContent = payload.raw;
+  cleanedEl.textContent = payload.cleaned;
 });

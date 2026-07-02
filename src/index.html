@@ -2,38 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
-    <script type="module" src="/main.js" defer></script>
+    <link rel="stylesheet" href="styles.css" />
+    <title>shout</title>
   </head>
-
   <body>
-    <main class="container">
-      <h1>Welcome to Tauri</h1>
-
-      <div class="row">
-        <a href="https://tauri.app" target="_blank">
-          <img src="/assets/tauri.svg" class="logo tauri" alt="Tauri logo" />
-        </a>
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"
-          target="_blank"
-        >
-          <img
-            src="/assets/javascript.svg"
-            class="logo vanilla"
-            alt="JavaScript logo"
-          />
-        </a>
+    <main>
+      <h1>shout</h1>
+      <div id="status-row">
+        <span id="dot" class="starting"></span>
+        <span id="state">starting…</span>
       </div>
-      <p>Click on the Tauri logo to learn more about the framework</p>
-
-      <form class="row" id="greet-form">
-        <input id="greet-input" placeholder="Enter a name..." />
-        <button type="submit">Greet</button>
-      </form>
-      <p id="greet-msg"></p>
+      <p id="detail"></p>
+      <p class="hint">Hold <kbd id="hotkey">alt+space</kbd>, speak, release.</p>
+      <section id="last" hidden>
+        <h2>Last dictation</h2>
+        <p class="label">raw</p>
+        <p id="raw" class="text"></p>
+        <p class="label">cleaned</p>
+        <p id="cleaned" class="text"></p>
+      </section>
     </main>
+    <script src="main.js"></script>
   </body>
 </html>

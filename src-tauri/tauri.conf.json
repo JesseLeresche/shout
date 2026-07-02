@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "shout-scaffold",
+  "productName": "shout",
   "version": "0.1.0",
   "identifier": "dev.shout.app",
   "build": {
@@ -10,9 +10,9 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "shout-scaffold",
-        "width": 800,
-        "height": 600
+        "title": "shout",
+        "width": 460,
+        "height": 420
       }
     ],
     "security": {

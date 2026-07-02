@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    shout_scaffold_lib::run()
+    shout_lib::run()
 }
