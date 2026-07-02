@@ -83,10 +83,18 @@ fn run(cfg: Config, rx: Receiver<GhostCmd>, app: AppHandle) {
     }
 }
 
+/// Ghost input: explicit ghost device (e.g. mic+BlackHole aggregate) >
+/// the dictation mic > system default.
+fn ghost_device(cfg: &Config) -> Option<&str> {
+    cfg.ghost_input_device
+        .as_deref()
+        .or(cfg.input_device.as_deref())
+}
+
 fn start_session(cfg: &Config) -> Result<GhostSession> {
     let vad_model = Config::models_root().join("silero_vad.onnx");
     let vad = Vad::load(&vad_model)?;
-    let rec = start_recording_on(cfg.ghost_input_device.as_deref())?;
+    let rec = start_recording_on(ghost_device(cfg))?;
     let started_at = Local::now();
     let spool_dir = dirs::home_dir()
         .unwrap_or_default()
@@ -178,10 +186,7 @@ fn finish_session(cfg: &Config, s: GhostSession) -> Result<PathBuf> {
 
     let note = MeetingNote {
         started_at,
-        source: cfg
-            .ghost_input_device
-            .clone()
-            .unwrap_or_else(|| "default mic".into()),
+        source: ghost_device(cfg).unwrap_or("default mic").to_string(),
         speakers: speaker_names,
         duration_min,
         summary,
