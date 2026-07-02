@@ -138,3 +138,15 @@ live ghost session via hotkey (mic path), and eyes-on Phase 3 UI checks (pill, t
 settings, scratch-that). Screen locked while Jesse is away — global hotkeys and
 synthetic keys are swallowed by the lock screen (IOConsoleLocked=Yes), which also
 explains the one failed E2E attempt right after resume.
+
+## 2026-07-02 — Phase 1 verifier subagent verdict: PASS (code-verifiable criteria)
+
+Fresh-context subagent, instructed not to trust this log, independently: ran the full
+test suite (all green), re-ran the Parakeet test with --nocapture and confirmed the
+real transcript, traced every pipeline stage to file:line, and grepped the tree for
+the privacy invariant (only network client is the Ollama one; no telemetry). Verdict:
+**PASS on all code-verifiable criteria, no bugs found.** Open items it confirmed as
+environment-limited, not failures: live injection E2E (needs Jesse — BLOCKERS.md),
+Windows build (no Windows machine), tailnet latency. (It also caught that an earlier
+"6/6 tests" line here went stale after Phases 3/4 added tests — current suite is 10/10
+including the ghost E2E, which postdates its 9/9 count.)
