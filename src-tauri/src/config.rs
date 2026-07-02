@@ -26,6 +26,9 @@ pub struct Config {
     pub ollama_summary_model: String,
     /// Path to the Whisper ggml model file. Defaults under the models dir.
     pub whisper_model: Option<PathBuf>,
+    /// Per-app style instructions for cleanup, keyed by app name
+    /// (e.g. Slack = "casual tone, contractions fine").
+    pub app_prompts: std::collections::HashMap<String, String>,
 }
 
 impl Default for Config {
@@ -40,6 +43,7 @@ impl Default for Config {
             vault_dir: None,
             ollama_summary_model: "qwen2.5:7b".into(),
             whisper_model: None,
+            app_prompts: Default::default(),
         }
     }
 }

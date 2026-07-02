@@ -64,6 +64,17 @@ ghost_hotkey = "alt+shift+g"
 
 `SHOUT_OLLAMA_URL` overrides `ollama_url`.
 
+Per-app cleanup styles (config only):
+
+```toml
+[app_prompts]
+Slack = "casual tone, contractions are fine"
+Mail = "professional email prose"
+```
+
+Say **"scratch that"** as its own dictation to erase the previous one.
+The app lives in the tray; closing the window hides it.
+
 ## Tests
 
 ```sh

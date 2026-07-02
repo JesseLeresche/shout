@@ -49,3 +49,14 @@ fn type_text(text: &str) -> Result<()> {
     enigo.text(text).context("type text")?;
     Ok(())
 }
+
+/// Erase the last `n` characters at the cursor ("scratch that").
+pub fn delete_chars(n: usize) -> Result<()> {
+    let mut enigo = Enigo::new(&Settings::default()).context("init enigo")?;
+    for _ in 0..n.min(4000) {
+        enigo
+            .key(Key::Backspace, Direction::Click)
+            .context("backspace")?;
+    }
+    Ok(())
+}

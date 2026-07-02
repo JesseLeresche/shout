@@ -14,14 +14,23 @@ cleaned text — no commentary, no quotation marks around it.";
 /// Clean up a raw transcript via Ollama. Falls back to the raw text on any
 /// failure so dictation never blocks on the LLM being reachable.
 /// SHOUT_MOCK_LLM=1 skips the network entirely (offline passthrough).
-pub fn cleanup(cfg: &Config, raw: &str) -> String {
+/// `target_app` selects a per-app style instruction from config, if any.
+pub fn cleanup(cfg: &Config, raw: &str, target_app: Option<&str>) -> String {
     if std::env::var("SHOUT_MOCK_LLM").is_ok() {
         return raw.to_string();
+    }
+    let mut system = SYSTEM_PROMPT.to_string();
+    if let Some(style) = target_app.and_then(|a| cfg.app_prompts.get(a)) {
+        system.push_str(&format!(
+            "\nStyle for the app the user is dictating into ({}): {}",
+            target_app.unwrap_or_default(),
+            style
+        ));
     }
     match request(
         cfg,
         &cfg.ollama_model,
-        SYSTEM_PROMPT,
+        &system,
         raw,
         Duration::from_secs(15),
     ) {

@@ -38,7 +38,10 @@ fn parakeet_transcribes_bundled_test_wav() {
 fn ollama_cleanup_mock_passthrough() {
     std::env::set_var("SHOUT_MOCK_LLM", "1");
     let cfg = Config::default();
-    assert_eq!(ollama::cleanup(&cfg, "um hello world"), "um hello world");
+    assert_eq!(
+        ollama::cleanup(&cfg, "um hello world", None),
+        "um hello world"
+    );
     std::env::remove_var("SHOUT_MOCK_LLM");
 }
 
@@ -48,5 +51,5 @@ fn ollama_cleanup_falls_back_when_unreachable() {
         ollama_url: "http://127.0.0.1:1".into(),
         ..Default::default()
     };
-    assert_eq!(ollama::cleanup(&cfg, "hello there"), "hello there");
+    assert_eq!(ollama::cleanup(&cfg, "hello there", None), "hello there");
 }

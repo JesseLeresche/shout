@@ -14,14 +14,30 @@
         <span id="state">starting…</span>
       </div>
       <p id="detail"></p>
-      <p class="hint">Hold <kbd id="hotkey">alt+space</kbd>, speak, release.</p>
-      <p class="hint">Ghost mode (meeting capture): <kbd>alt+shift+g</kbd> to start/stop.</p>
+      <p class="hint">Hold <kbd id="hk-dictate">alt+space</kbd>, speak, release.
+        Ghost mode: <kbd id="hk-ghost">alt+shift+g</kbd>.</p>
+
       <section id="last" hidden>
         <h2>Last dictation</h2>
         <p class="label">raw</p>
         <p id="raw" class="text"></p>
         <p class="label">cleaned</p>
         <p id="cleaned" class="text"></p>
+      </section>
+
+      <section id="settings">
+        <h2>Settings</h2>
+        <label>Ollama URL <input id="f-ollama_url" /></label>
+        <label>Cleanup model <input id="f-ollama_model" /></label>
+        <label>Summary model <input id="f-ollama_summary_model" /></label>
+        <label>Dictation hotkey <input id="f-hotkey" /></label>
+        <label>Ghost hotkey <input id="f-ghost_hotkey" /></label>
+        <label>Vault dir <input id="f-vault_dir" placeholder="~/Documents/ShoutVault" /></label>
+        <label>Ghost input device <input id="f-ghost_input_device" placeholder="default mic" /></label>
+        <div id="save-row">
+          <button id="save">Save</button>
+          <span id="save-note"></span>
+        </div>
       </section>
     </main>
     <script src="main.js"></script>

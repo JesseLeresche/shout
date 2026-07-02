@@ -72,3 +72,19 @@ Diarization: official sherpa-onnx crate ships pyannote segmentation + speaker em
 
 **None of this has been compiled yet** — first `cargo check`, model downloads
 (--ghost, ~3.6GB), and live verification wait for resume.
+
+## 2026-07-02 — Phase 3 drafted during pause (NOT compiled or verified)
+
+Same quiet-only constraint. Drafted: overlay pill (transparent always-on-top window,
+shown by the Rust status emitter whenever state ≠ idle; requires tauri
+`macos-private-api` feature), tray icon with ghost-toggle/show/quit menu (close-to-tray
+on the main window), settings form in the main window backed by `get_config`/
+`save_config` commands (writes ~/.config/shout/config.toml; hotkey changes need
+restart), per-app style profiles (`[app_prompts]` in config, frontmost app looked up
+via osascript at dictation time, appended to the cleanup system prompt), and
+"scratch that" (normalized transcript match → backspaces equal to the previous
+injection's char count, capped at 4000, on the main thread).
+
+Resume checklist: `cargo check --tests` (new deps: whisper-rs — compiles whisper.cpp,
+long first build; chrono), `cargo test`, `./scripts/download-models.sh --ghost`,
+re-verify dictation E2E on idle machine, ghost E2E, then verifier subagents per phase.

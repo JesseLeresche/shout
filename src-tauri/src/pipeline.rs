@@ -16,6 +16,37 @@ pub fn status(app: &AppHandle, state: &str, detail: Option<String>) {
         "shout:status",
         serde_json::json!({ "state": state, "detail": detail }),
     );
+    // The overlay pill is visible whenever something is happening.
+    use tauri::Manager;
+    if let Some(pill) = app.get_webview_window("pill") {
+        let _ = if state == "idle" {
+            pill.hide()
+        } else {
+            pill.show()
+        };
+    }
+}
+
+/// Name of the frontmost app (the dictation target), used for per-app style
+/// profiles. macOS only; returns None elsewhere or on failure.
+fn frontmost_app() -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        let out = std::process::Command::new("osascript")
+            .args([
+                "-e",
+                "tell application \"System Events\" to get name of first process whose frontmost is true",
+            ])
+            .output()
+            .ok()?;
+        if !out.status.success() {
+            return None;
+        }
+        let name = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        (!name.is_empty()).then_some(name)
+    }
+    #[cfg(not(target_os = "macos"))]
+    None
 }
 
 /// Run injection on the main thread: enigo's key mapping uses macOS TIS APIs
@@ -57,6 +88,9 @@ fn run(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
     };
     status(&app, "idle", None);
 
+    // Chars of the last injected text, for "scratch that".
+    let mut last_injected: Option<usize> = None;
+
     while let Ok(job) = rx.recv() {
         // Ignore accidental taps shorter than ~200ms of audio.
         if (job.samples.len() as f32) < job.sample_rate as f32 * 0.2 {
@@ -75,13 +109,36 @@ fn run(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
             status(&app, "idle", Some("heard nothing".into()));
             continue;
         }
+
+        // "scratch that": erase the previous dictation instead of injecting.
+        let normalized: String = raw
+            .to_lowercase()
+            .chars()
+            .filter(|c| c.is_alphanumeric() || *c == ' ')
+            .collect();
+        if normalized.trim() == "scratch that" {
+            match last_injected.take() {
+                Some(n) => {
+                    status(&app, "injecting", None);
+                    match delete_on_main_thread(&app, n) {
+                        Ok(()) => status(&app, "idle", Some("scratched".into())),
+                        Err(e) => status(&app, "error", Some(format!("scratch failed: {e:#}"))),
+                    }
+                }
+                None => status(&app, "idle", Some("nothing to scratch".into())),
+            }
+            continue;
+        }
+
+        let target_app = frontmost_app();
         status(&app, "cleaning", None);
-        let cleaned = ollama::cleanup(&cfg, &raw);
+        let cleaned = ollama::cleanup(&cfg, &raw, target_app.as_deref());
         eprintln!("shout: cleaned: {cleaned:?}");
         status(&app, "injecting", None);
         match inject_on_main_thread(&app, &cleaned) {
             Ok(()) => {
                 eprintln!("shout: injected {} chars", cleaned.chars().count());
+                last_injected = Some(cleaned.chars().count());
                 let _ = app.emit(
                     "shout:result",
                     serde_json::json!({ "raw": raw, "cleaned": cleaned }),
@@ -91,4 +148,14 @@ fn run(cfg: Config, rx: Receiver<PipeJob>, app: AppHandle) {
             Err(e) => status(&app, "error", Some(format!("inject failed: {e:#}"))),
         }
     }
+}
+
+fn delete_on_main_thread(app: &AppHandle, n: usize) -> anyhow::Result<()> {
+    let (tx, rx) = mpsc::channel();
+    app.run_on_main_thread(move || {
+        let _ = tx.send(inject::delete_chars(n));
+    })
+    .map_err(|e| anyhow!("dispatch to main thread: {e}"))?;
+    rx.recv_timeout(Duration::from_secs(10))
+        .map_err(|_| anyhow!("scratch timed out"))?
 }

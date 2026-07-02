@@ -8,11 +8,27 @@
   },
   "app": {
     "withGlobalTauri": true,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "shout",
         "width": 460,
-        "height": 420
+        "height": 560
+      },
+      {
+        "label": "pill",
+        "url": "pill.html",
+        "title": "shout pill",
+        "width": 240,
+        "height": 48,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "visible": false,
+        "focus": false,
+        "shadow": false
       }
     ],
     "security": {

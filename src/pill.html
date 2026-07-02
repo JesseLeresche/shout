@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>shout pill</title>
+    <style>
+      html, body { margin: 0; background: transparent; overflow: hidden; }
+      #pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        margin: 6px auto;
+        width: fit-content;
+        padding: 0 16px;
+        border-radius: 18px;
+        background: rgba(20, 20, 24, 0.88);
+        color: #eee;
+        font: 600 13px -apple-system, BlinkMacSystemFont, sans-serif;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      }
+      #pdot { width: 9px; height: 9px; border-radius: 50%; background: gray; }
+      #pdot.recording, #pdot.ghost-recording { background: #ff4d4f; animation: pulse 1.2s infinite; }
+      #pdot.transcribing, #pdot.cleaning, #pdot.injecting, #pdot.loading-model { background: #f5a623; }
+      #pdot.ghost-processing { background: #a06cd5; }
+      #pdot.error { background: #d0021b; }
+      @keyframes pulse { 50% { opacity: 0.4; } }
+    </style>
+  </head>
+  <body>
+    <div id="pill"><span id="pdot"></span><span id="ptext">shout</span></div>
+    <script>
+      const labels = {
+        "recording": "listening…",
+        "transcribing": "transcribing…",
+        "cleaning": "cleaning up…",
+        "injecting": "typing…",
+        "loading-model": "loading model…",
+        "ghost-recording": "ghost capture on",
+        "ghost-processing": "processing meeting…",
+        "error": "error",
+      };
+      window.__TAURI__.event.listen("shout:status", ({ payload }) => {
+        document.getElementById("pdot").className = payload.state;
+        document.getElementById("ptext").textContent =
+          labels[payload.state] ?? payload.state;
+      });
+    </script>
+  </body>
+</html>
