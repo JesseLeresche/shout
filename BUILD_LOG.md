@@ -88,3 +88,29 @@ injection's char count, capped at 4000, on the main thread).
 Resume checklist: `cargo check --tests` (new deps: whisper-rs — compiles whisper.cpp,
 long first build; chrono), `cargo test`, `./scripts/download-models.sh --ghost`,
 re-verify dictation E2E on idle machine, ghost E2E, then verifier subagents per phase.
+
+## 2026-07-02 — Resumed; Phases 3–4 compile, Phase 2 measured
+
+- First compile of the pause-drafted code: whisper.cpp built clean; **5 Rust errors
+  total** (cpal 0.18 `Device::name` → `description().name()`; whisper-rs 0.16.0's
+  released API differs from its README — `full_n_segments()` returns `c_int`, segment
+  text via `get_segment(i).to_str()`). Fixed; `cargo check --tests` clean, **9/9 tests
+  pass** (new: resampler ×2, obsidian note schema ×1).
+- Ghost models downloaded to models/: silero_vad.onnx, pyannote segmentation 3.0,
+  3dspeaker eres2net embedding, ggml-large-v3.bin (3.1GB). Script bug fixed en route
+  (`$SEG…` — bash swallowed the unicode ellipsis into the variable name under `set -u`).
+- Transient full DNS outage mid-resume (~2 min, even python resolution failed);
+  waited it out with a background probe, then reran both jobs.
+
+### Phase 2 latency evidence (quiet machine, local Ollama 0.24)
+
+| model | cold load | warm (2 short cleanups) |
+|---|---|---|
+| qwen2.5:7b | ~12s | 701ms, 404ms |
+| qwen2.5:3b | ~9s | 654ms, 286ms |
+
+Cleanup quality identical on the test set (self-correction applied, fillers stripped).
+Mitigation shipped: `keep_alive: "30m"` on every request + best-effort warm-up at app
+startup, concurrent with the STT model load. Default stays qwen2.5:7b (quality
+headroom; warm latency fine). Tailnet host hardening remains a server-side task for
+Jesse's box (BLOCKERS.md) — client honors `SHOUT_OLLAMA_URL`/config for any host.

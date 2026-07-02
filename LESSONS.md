@@ -25,6 +25,16 @@ because his activity stole focus from the test target, and TTS audio played out 
 during what may have been a meeting. Check `ioreg -c IOHIDSystem` HIDIdleTime (and ask)
 before any synthetic-input test; prefer idle windows or explicit user cooperation.
 
+## Screen lock swallows global hotkeys and synthetic keys — check IOConsoleLocked first
+An E2E "regression" (zero shortcut events reaching the app) was just the lock screen:
+`ioreg -l -d 2 | grep IOConsoleLocked` said Yes. Desktop E2E needs unlocked+idle, a
+narrow window. Also: synthetic key events reset HIDIdleTime, so my own tests pollute
+idle-based "is the user here" detection.
+
+## `say -o file` renders TTS to disk without playing audio
+Perfect for building speech fixtures on a machine where playing audio would disturb
+people: `say -v Samantha -o f.wav --file-format=WAVE --data-format=LEI16@16000 "…"`.
+
 ## macOS drops synthetic events silently without Accessibility; enigo Ok ≠ delivered
 "injected N chars" only proves the CGEvent calls returned. Verify AX trust with
 `swift -e 'import ApplicationServices; print(AXIsProcessTrusted())'` (this session: true).

@@ -195,7 +195,7 @@ fn finish_session(cfg: &Config, s: GhostSession) -> Result<PathBuf> {
 
 /// Returns a 0-based speaker index per chunk. Falls back to a single speaker
 /// when diarization models are absent or diarization fails.
-fn diarize_chunks(chunks: &[SpeechChunk]) -> Vec<usize> {
+pub fn diarize_chunks(chunks: &[SpeechChunk]) -> Vec<usize> {
     use sherpa_onnx::{
         FastClusteringConfig, OfflineSpeakerDiarization, OfflineSpeakerDiarizationConfig,
         OfflineSpeakerSegmentationModelConfig, OfflineSpeakerSegmentationPyannoteModelConfig,
