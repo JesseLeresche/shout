@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
-# Download the STT models shout needs into ./models (gitignored).
+# Download the STT models shout needs.
+#
+# Inside a shout git checkout, models land in ./models (gitignored) so dev
+# builds pick them up automatically. Run standalone (e.g. downloaded on its
+# own, no repo clone) they land in ~/.config/shout/models instead, which is
+# where an installed shout.app looks for them. Override with SHOUT_MODELS_DIR.
 set -euo pipefail
-cd "$(dirname "$0")/.."
-mkdir -p models
-cd models
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+if [ -n "${SHOUT_MODELS_DIR:-}" ]; then
+  dest="$SHOUT_MODELS_DIR"
+elif [ -d "$script_dir/../.git" ]; then
+  dest="$script_dir/../models"
+else
+  dest="$HOME/.config/shout/models"
+fi
+mkdir -p "$dest"
+echo "Downloading models into $dest"
+cd "$dest"
 
 PARAKEET=sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8
 if [ -d "$PARAKEET" ]; then

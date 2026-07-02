@@ -18,16 +18,32 @@ launch — right-click the app and choose **Open**, or run:
 xattr -cr /Applications/shout.app
 ```
 
+The dictation model isn't bundled in the `.dmg` (it's ~480MB). One-time setup:
+
+```sh
+curl -fsSL -o download-models.sh \
+  https://raw.githubusercontent.com/JesseLeresche/shout/main/scripts/download-models.sh
+chmod +x download-models.sh
+./download-models.sh
+```
+
+This installs to `~/.config/shout/models`, which is where the bundled app looks. Without
+it, the hotkey will appear to do nothing — check Console.app for `shout:` log lines if
+dictation isn't producing text.
+
 Found a bug or have a feature idea? [Open an issue](https://github.com/JesseLeresche/shout/issues).
 
 ## Requirements
 
-- Rust + Node 20+ (`npm install` once for the Tauri CLI)
+- Rust ([rustup.rs](https://rustup.rs)) + Node 20+ (`npm install` once for the Tauri CLI)
+- Xcode Command Line Tools (`xcode-select --install`) — C/C++ toolchain for the bundled
+  whisper.cpp/sherpa-onnx native builds
 - `cmake` (builds the bundled sherpa-onnx STT library)
-- STT models: `./scripts/download-models.sh`
-- Optional: an [Ollama](https://ollama.com) server for cleanup — without it, raw
-  transcripts are injected unchanged (set `SHOUT_MOCK_LLM=1` to skip the network call
-  entirely).
+- STT models: `./scripts/download-models.sh` (lands in `./models` inside a checkout)
+- Optional: an [Ollama](https://ollama.com) server for cleanup — pull the default model
+  with `ollama pull qwen2.5:7b` (or set `ollama_model` in config to one you already have).
+  Without Ollama running, raw transcripts are injected unchanged (set `SHOUT_MOCK_LLM=1`
+  to skip the network call entirely).
 
 ## Run
 
