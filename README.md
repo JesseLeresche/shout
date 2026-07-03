@@ -31,6 +31,13 @@ This installs to `~/.config/shout/models`, which is where the bundled app looks.
 it, the hotkey will appear to do nothing — check Console.app for `shout:` log lines if
 dictation isn't producing text.
 
+If you also want ghost mode (meeting capture → notes), fetch its models too — a
+separate ~3.6GB download (Whisper Large V3, VAD, diarization):
+
+```sh
+./download-models.sh --ghost
+```
+
 Found a bug or have a feature idea? [Open an issue](https://github.com/JesseLeresche/shout/issues).
 
 ## Requirements
