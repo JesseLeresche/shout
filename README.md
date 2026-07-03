@@ -52,7 +52,12 @@ npm install
 npm run tauri dev
 ```
 
-Hold **alt+space**, speak, release.
+Hold **alt+space**, speak, release. First launch takes a few seconds while the
+Parakeet model loads (the status shows "loading-model"); dictation is ready when the
+tray app's status turns idle.
+
+To build your own installable bundle: `npm run tauri build` → `.dmg` under
+`src-tauri/target/release/bundle/dmg/`.
 
 ## Ghost mode (meeting capture)
 
@@ -63,6 +68,11 @@ Whisper Large V3, diarized, summarized via Ollama, and written as one markdown n
 Obsidian vault).
 
 Ghost models are separate (~3.6GB total): `./scripts/download-models.sh --ghost`.
+
+Processing starts when you stop the capture and can take a minute or two — the 3.1GB
+Whisper model is loaded per session (the pill shows "processing meeting…"; it isn't
+hung). And the obvious-but-worth-saying: recording other people may require their
+consent where you live — everything stays on your machine, but ask anyway.
 
 **System audio (the other side of a call):** install
 [BlackHole 2ch](https://github.com/ExistentialAudio/BlackHole), create an Aggregate
@@ -87,6 +97,7 @@ ollama_model = "qwen2.5:7b"             # dictation cleanup (small, fast)
 ollama_summary_model = "qwen2.5:7b"     # ghost summaries (bigger is fine, batch)
 hotkey = "alt+space"
 # input_device = "MacBook Pro Microphone"  # pin if a virtual device (Steam/Teams) is the system default
+live_typing = false                     # true = type raw words at the cursor while speaking
 ghost_hotkey = "alt+shift+g"
 # vault_dir = "/path/to/ObsidianVault"
 # ghost_input_device = "Shout Aggregate"  # mic+BlackHole aggregate for system audio
@@ -113,11 +124,44 @@ as you speak and corrected to the cleaned text on release — immediate, but the
 visibly rewrites itself and can misbehave in terminals/vim; the default (pill-only
 streaming) never touches the target app until the final clean paste.
 
+Most settings are also editable in the app window (tray → "Show shout"); the
+streaming-mode toggle applies immediately, hotkey/mic changes need a restart.
+
+## Troubleshooting
+
+The common failure modes are all *silent* — macOS gives no error for any of these.
+Logs go to stderr (`npm run tauri dev` terminal) or Console.app filtered on `shout:`.
+
+**It transcribes (pill shows my words) but nothing is typed into the app.**
+Accessibility permission is missing — macOS silently drops synthetic keystrokes.
+System Settings → Privacy & Security → Accessibility → enable your terminal (dev) or
+shout.app (installed). If it stops working after reinstalling/updating an unsigned
+build, remove and re-add the entry — the grant is tied to the app's identity.
+
+**Every dictation says "heard nothing".**
+Your system-default input is almost certainly a virtual device that outputs silence
+(Steam Streaming Microphone, Microsoft Teams Audio, …). The log shows
+`peak level 0.0000` — a real mic gives ~0.1+ while speaking. Fix: set "Dictation mic"
+to a real device in the settings window (or `input_device` in config).
+
+**The hotkey does nothing at all.**
+Either the STT models are missing (log says so; run `scripts/download-models.sh`) or
+another app owns the key combo — change `hotkey` in config and restart. Note the
+hotkey also won't fire from the lock screen.
+
+**Ghost notes say "Summary unavailable".**
+Ollama isn't reachable or the summary model isn't pulled (`ollama pull qwen2.5:7b`).
+The transcript is still written; only the summary is affected. The same applies to
+dictation cleanup: without Ollama you get the raw transcript, uncleaned.
+
 ## Tests
 
 ```sh
 cd src-tauri && cargo test
 ```
+
+The ghost E2E test is `#[ignore]`d by default (needs the `--ghost` models); run it
+with `cargo test --test ghost -- --ignored`.
 
 ## License
 
