@@ -1,6 +1,6 @@
 [package]
 name = "shout"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local, self-hosted voice dictation"
 authors = ["Jesse LeResche"]
 edition = "2021"
