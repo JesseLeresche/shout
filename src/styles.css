@@ -78,7 +78,8 @@ kbd {
   white-space: pre-wrap;
 }
 
-#settings label {
+#settings label,
+#models label {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -98,7 +99,8 @@ kbd {
   width: auto;
 }
 
-#settings input {
+#settings input,
+#models input {
   flex: 1;
   max-width: 240px;
   padding: 4px 6px;
@@ -119,4 +121,38 @@ kbd {
 #save-note {
   font-size: 0.75rem;
   opacity: 0.7;
+}
+
+.model-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.4rem 0;
+  font-size: 0.85rem;
+}
+
+.model-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.model-meta {
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+.model-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.dl-progress {
+  width: 90px;
+}
+
+.dl-progress[hidden] {
+  display: none;
 }

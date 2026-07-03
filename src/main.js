@@ -35,6 +35,8 @@ const FIELDS = [
   "ghost_hotkey",
   "vault_dir",
   "ghost_input_device",
+  "parakeet_model_dir",
+  "whisper_model",
 ];
 const field = (name) => document.getElementById(`f-${name}`);
 
@@ -71,3 +73,76 @@ document.getElementById("save").addEventListener("click", async () => {
     note.textContent = `save failed: ${e}`;
   }
 });
+
+// --- Models ---
+const modelsListEl = document.getElementById("models-list");
+
+function formatBytes(n) {
+  if (n == null) return "";
+  const mb = n / (1024 * 1024);
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1)}GB` : `${mb.toFixed(0)}MB`;
+}
+
+function modelRowHtml(m) {
+  return `
+    <div class="model-row" id="model-${m.id}">
+      <div class="model-info">
+        <span class="model-label">${m.label}</span>
+        <span class="model-meta">${m.category} · ~${m.approx_mb}MB</span>
+      </div>
+      <div class="model-status">
+        <span class="model-status-text">${m.installed ? "installed" : "not installed"}</span>
+        ${m.installed ? "" : `<button class="dl" data-id="${m.id}">Download</button>`}
+        <progress class="dl-progress" max="100" value="0" hidden></progress>
+      </div>
+    </div>`;
+}
+
+async function loadModels() {
+  const models = await invoke("list_models");
+  modelsListEl.innerHTML = models.map(modelRowHtml).join("");
+  for (const btn of modelsListEl.querySelectorAll(".dl")) {
+    btn.addEventListener("click", () => startDownload(btn.dataset.id));
+  }
+}
+
+function startDownload(id) {
+  const row = document.getElementById(`model-${id}`);
+  const btn = row.querySelector(".dl");
+  const progress = row.querySelector(".dl-progress");
+  const statusText = row.querySelector(".model-status-text");
+  btn.disabled = true;
+  progress.hidden = false;
+  statusText.textContent = "starting…";
+  invoke("download_model", { id }).catch((e) => {
+    statusText.textContent = `failed: ${e}`;
+    btn.disabled = false;
+  });
+}
+
+listen("shout:model-progress", ({ payload }) => {
+  const row = document.getElementById(`model-${payload.id}`);
+  if (!row) return;
+  const btn = row.querySelector(".dl");
+  const progress = row.querySelector(".dl-progress");
+  const statusText = row.querySelector(".model-status-text");
+  if (payload.phase === "downloading") {
+    statusText.textContent = payload.total
+      ? `downloading ${formatBytes(payload.downloaded)} / ${formatBytes(payload.total)}`
+      : `downloading ${formatBytes(payload.downloaded)}`;
+    if (payload.total) {
+      progress.max = payload.total;
+      progress.value = payload.downloaded;
+    }
+  } else if (payload.phase === "extracting") {
+    statusText.textContent = "extracting…";
+  } else if (payload.phase === "done") {
+    loadModels();
+  } else if (payload.phase === "error") {
+    statusText.textContent = `failed: ${payload.message}`;
+    if (btn) btn.disabled = false;
+    progress.hidden = true;
+  }
+});
+
+loadModels();

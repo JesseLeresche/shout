@@ -10,6 +10,7 @@ pub mod ghost;
 pub mod hotkey;
 pub mod inject;
 pub mod llm;
+pub mod models;
 pub mod pipeline;
 pub mod pkm;
 pub mod stt;
@@ -22,6 +23,16 @@ fn get_config() -> config::Config {
 #[tauri::command]
 fn get_status() -> serde_json::Value {
     pipeline::last_status()
+}
+
+#[tauri::command]
+fn list_models() -> Vec<serde_json::Value> {
+    models::status(&config::Config::load())
+}
+
+#[tauri::command]
+fn download_model(id: String, app: tauri::AppHandle) -> Result<(), String> {
+    models::download(&id, app)
 }
 
 #[tauri::command]
@@ -49,7 +60,13 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![get_config, save_config, get_status])
+        .invoke_handler(tauri::generate_handler![
+            get_config,
+            save_config,
+            get_status,
+            list_models,
+            download_model
+        ])
         .on_window_event(|window, event| {
             // Closing the settings window hides to tray; quit via tray menu.
             if window.label() == "main" {
